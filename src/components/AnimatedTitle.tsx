@@ -197,6 +197,7 @@ export default function AnimatedTitle({
         return (
           <motion.span
             key={i}
+            data-no-trail
             className="inline-block"
             initial={{ x: s.x, y: s.y, rotate: s.rotate, scale: s.scale, opacity: 0 }}
             animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
@@ -216,6 +217,7 @@ export default function AnimatedTitle({
       {/* KIM: inline-block wrapper so the flag overlay positions relative to it */}
       <span
         ref={kimRef}
+        data-no-trail
         style={{ position: "relative", display: "inline-block" }}
         onMouseMove={handleMouseMove}
       >

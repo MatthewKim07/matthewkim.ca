@@ -12,7 +12,6 @@ export default function Home() {
   return (
     <div className={`${milker.variable} bg-white overflow-x-hidden`}>
       <div
-        data-no-trail
         className="text-center text-6xl md:text-8xl pt-16 pb-4 text-gray-900 cursor-default select-none"
       >
         <AnimatedTitleWrapper
