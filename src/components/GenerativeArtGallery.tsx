@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   motion,
   useMotionValue,
@@ -11,6 +12,7 @@ import { ArrowUpRight } from "lucide-react";
 
 interface GalleryItem {
   title: string;
+  slug: string;
   category: string;
   image: string;
 }
@@ -99,6 +101,7 @@ const GenerativeArtCanvas = ({ isHovered }: { isHovered: boolean }) => {
 };
 
 const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
+  const slug = item.slug;
   const [isHovered, setIsHovered] = React.useState(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -146,8 +149,9 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
       onHoverEnd={() => setIsHovered(false)}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       data-no-trail
-      className="group relative h-80 w-full rounded-xl overflow-hidden"
+      className="group relative h-80 w-full rounded-xl overflow-hidden select-none"
     >
+      <Link href={`/projects/${slug}`} className="absolute inset-0 z-20" aria-label={`View ${item.title}`} />
       <div
         style={{ transform: "translateZ(50px)", transformStyle: "preserve-3d" }}
         className="absolute inset-0 flex flex-col justify-end p-6 rounded-xl overflow-hidden"
@@ -199,55 +203,15 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
 };
 
 const galleryItems: GalleryItem[] = [
-  {
-    title: "Compilot",
-    category: "Web Development",
-    image: "/images/compilot.png",
-  },
-  {
-    title: "Chef It",
-    category: "UI/UX Design",
-    image: "/images/chef-it.png",
-  },
-  {
-    title: "You vs You",
-    category: "Branding",
-    image: "/images/you-vs-you.png",
-  },
-  {
-    title: "Vibe Learn",
-    category: "Mobile App",
-    image:
-      "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop",
-  },
-  {
-    title: "WaterlooWorks+",
-    category: "Data Visualization",
-    image: "/images/waterloo-works-plus.png",
-  },
-  {
-    title: "Clarus",
-    category: "AI Integration",
-    image: "/images/clarus.png",
-  },
-  {
-    title: "PaintMind",
-    category: "Systems Design",
-    image:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-  },
-  {
-    title: "Pathfinding API",
-    category: "Machine Learning",
-    image:
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop",
-  },
-  {
-    title: "QueueMe",
-    category: "Robotics",
-    image:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=400&auto=format&fit=crop",
-  },
+  { title: "Compilot", slug: "compilot", category: "Web Development", image: "/images/compilot.png" },
+  { title: "Chef It", slug: "chef-it", category: "UI/UX Design", image: "/images/chef-it.png" },
+  { title: "You vs You", slug: "you-vs-you", category: "Branding", image: "/images/you-vs-you.png" },
+  { title: "Vibe Learn", slug: "vibe-learn", category: "Mobile App", image: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop" },
+  { title: "WaterlooWorks+", slug: "waterlooworks-plus", category: "Data Visualization", image: "/images/waterloo-works-plus.png" },
+  { title: "Clarus", slug: "clarus", category: "AI Integration", image: "/images/clarus.png" },
+  { title: "PaintMind", slug: "paintmind", category: "Systems Design", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop" },
+  { title: "Pathfinding API", slug: "pathfinding-api", category: "Machine Learning", image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop" },
+  { title: "QueueMe", slug: "queueme", category: "Robotics", image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=400&auto=format&fit=crop" },
 ];
 
 export default function GenerativeArtGallery() {
