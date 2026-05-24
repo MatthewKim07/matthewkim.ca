@@ -52,14 +52,27 @@ const ImageTrail = ({
   const lastAddedTimeRef = useRef<number>(0);
   const { position: mousePosition } = useMouseVector(containerRef);
   const lastMousePosRef = useRef(mousePosition);
-  const currentIndexRef = useRef(0);
 
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
+  const shuffleQueueRef = useRef<number[]>([]);
+
+  const nextShuffledIndex = useCallback((count: number): number => {
+    if (shuffleQueueRef.current.length === 0) {
+      const arr = Array.from({ length: count }, (_, i) => i);
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      shuffleQueueRef.current = arr;
+    }
+    return shuffleQueueRef.current.shift()!;
+  }, []);
 
   const addToTrail = useCallback(
     (mousePos: { x: number; y: number }) => {
       if (childrenArray.length === 0) return;
 
+      const idx = nextShuffledIndex(childrenArray.length);
       const newItem: TrailItem = {
         id: uuidv4(),
         x: mousePos.x,
@@ -67,17 +80,14 @@ const ImageTrail = ({
         rotation: (Math.random() - 0.5) * rotationRange * 2,
         animationSequence,
         scale: 1,
-        child: childrenArray[currentIndexRef.current],
+        child: childrenArray[idx],
       };
-
-      currentIndexRef.current =
-        (currentIndexRef.current + 1) % childrenArray.length;
 
       setTrailItems((items) =>
         newOnTop ? [...items, newItem] : [newItem, ...items]
       );
     },
-    [childrenArray, rotationRange, animationSequence, newOnTop]
+    [childrenArray, rotationRange, animationSequence, newOnTop, nextShuffledIndex]
   );
 
   const removeFromTrail = useCallback((itemId: string) => {
