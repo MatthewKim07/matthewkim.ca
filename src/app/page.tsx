@@ -49,11 +49,11 @@ export default function Home() {
         />
       </div>
       <div className="max-w-xl mx-auto px-8 pt-2 pb-16 text-center select-none">
-        <p data-no-trail className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
+        <div data-no-trail className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
           <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" className="group">
             <span className="group-hover:text-gray-900 transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
           </LinkPreview>
-        </p>
+        </div>
         <div data-no-trail className="text-gray-700 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
           <p className="text-lg text-gray-800 inline-block">i build useful software</p>
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,14 +14,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.addEventListener("pageshow",function(e){if(e.persisted)location.reload()})`,
-          }}
-        />
-      </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head />
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Script id="bfcache-reload" strategy="beforeInteractive">
+          {`window.addEventListener("pageshow",function(e){if(e.persisted)location.reload()})`}
+        </Script>
+      </body>
     </html>
   );
 }
