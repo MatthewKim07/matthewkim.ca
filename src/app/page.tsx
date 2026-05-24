@@ -3,6 +3,8 @@ import { Handshake, Lightbulb, Trophy, Star, Briefcase, Mail } from "lucide-reac
 import GenerativeArtGallery from "@/components/GenerativeArtGallery";
 import { TrailControls } from "@/components/TrailControls";
 import AnimatedTitleWrapper from "@/components/AnimatedTitleWrapper";
+import { LinkPreview } from "@/components/LinkPreview";
+import { RainbowText } from "@/components/RainbowText";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -48,7 +50,9 @@ export default function Home() {
       </div>
       <div className="max-w-xl mx-auto px-8 pt-2 pb-16 text-center select-none">
         <p data-no-trail className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
-          Mechatronics Engineering @UWaterloo
+          <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" className="group">
+            <span className="group-hover:text-gray-900 transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
+          </LinkPreview>
         </p>
         <div data-no-trail className="text-gray-700 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
           <p className="text-lg text-gray-800 inline-block">i build useful software</p>
@@ -63,7 +67,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Trophy size={15} className="text-gray-300 shrink-0" />
-              <span>winner of the Fide x Lovable Hackathon</span>
+              <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Star size={15} className="text-gray-300 shrink-0" />
