@@ -1,0 +1,52 @@
+"use client";
+
+import { useCallback } from "react";
+import { motion } from "framer-motion";
+import { useMusicPlayer } from "@/context/MusicContext";
+
+function EqualizerBars({ active }: { active: boolean }) {
+  return (
+    <span className="inline-flex items-end gap-[2px] mb-[1px] text-gray-400" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="block w-[3px] bg-current rounded-full"
+          animate={active ? { scaleY: [0.35, 1, 0.5, 0.85, 0.35] } : { scaleY: 0.35 }}
+          transition={
+            active
+              ? { duration: 0.7 + i * 0.14, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.2 }
+          }
+          style={{ height: 11, originY: 1 }}
+        />
+      ))}
+    </span>
+  );
+}
+
+export function MusicWord() {
+  const { isPanelOpen, isPlaying, togglePanel } = useMusicPlayer();
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        togglePanel();
+      }
+    },
+    [togglePanel]
+  );
+
+  return (
+    <button
+      onClick={togglePanel}
+      onKeyDown={handleKeyDown}
+      aria-label={isPanelOpen ? "close music panel" : "music (click to open playlist)"}
+      aria-expanded={isPanelOpen}
+      className="cursor-pointer hover:opacity-60 transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm inline-flex items-center gap-1.5"
+    >
+      music
+      <EqualizerBars active={isPlaying} />
+    </button>
+  );
+}

@@ -8,6 +8,7 @@ import { LinkPreview } from "@/components/LinkPreview";
 import { RainbowText } from "@/components/RainbowText";
 import { CyclingPhrase } from "@/components/CyclingPhrase";
 import { BasketballWord } from "@/components/BasketballEasterEgg";
+import { MusicWord } from "@/components/MusicEasterEgg";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -76,7 +77,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Star size={15} className="text-gray-300 shrink-0" />
-              <span><BasketballWord />, music, travel, and always building</span>
+              <span><BasketballWord />, <MusicWord />, travel, and always building</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Briefcase size={15} className="text-gray-300 shrink-0" />

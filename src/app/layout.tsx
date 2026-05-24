@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { ClientRoot } from "@/components/ClientRoot";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <head />
       <body className="min-h-full flex flex-col">
-        {children}
+        <ClientRoot>{children}</ClientRoot>
         <Script id="bfcache-reload" strategy="beforeInteractive">
           {`window.addEventListener("pageshow",function(e){if(e.persisted)location.reload()})`}
         </Script>
