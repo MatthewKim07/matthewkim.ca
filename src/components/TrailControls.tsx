@@ -1,46 +1,57 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useAnimationControls, useMotionValue, animate } from "framer-motion";
+import { useAnimationFrame, useMotionValue, animate } from "framer-motion";
 import { CursorTrail } from "@/components/CursorTrail";
 
-const PIVOT_X       = 23;
-const PIVOT_Y       = 5;
+const PIVOT_X = 23;
+const PIVOT_Y = 5;
 const INACTIVE_ANGLE = 0;
-const ACTIVE_ANGLE   = 45;
-
-const DISC_OX = `${(12 / 32) * 100}%`; // 37.5%
-const DISC_OY = `${(15 / 28) * 100}%`; // 53.571%
+const ACTIVE_ANGLE = 45;
+const DISC_CX = 12;
+const DISC_CY = 15;
+const DISC_PERIOD_MS = 3500;
 
 export function TrailControls() {
   const [active, setActive] = useState(false);
-  const discControls = useAnimationControls();
+
+  const activeRef = useRef(active);
+  useEffect(() => { activeRef.current = active; }, [active]);
+
+  const discAngle = useMotionValue(0);
+  const discRef = useRef<SVGGElement>(null);
   const armAngle = useMotionValue(INACTIVE_ANGLE);
-  const armRef   = useRef<SVGGElement>(null);
+  const armRef = useRef<SVGGElement>(null);
+
+  useAnimationFrame((_, delta) => {
+    if (!activeRef.current) return;
+    discAngle.set((discAngle.get() + (delta * 360) / DISC_PERIOD_MS) % 360);
+  });
 
   useEffect(() => {
-    const setTransform = (a: number) => {
+    return discAngle.on("change", (a) => {
+      discRef.current?.setAttribute("transform", `rotate(${a} ${DISC_CX} ${DISC_CY})`);
+    });
+  }, [discAngle]);
+
+  useEffect(() => {
+    const sync = (a: number) => {
       armRef.current?.setAttribute(
         "transform",
         `translate(${PIVOT_X} ${PIVOT_Y}) rotate(${a})`
       );
     };
-    setTransform(armAngle.get());
-    return armAngle.on("change", setTransform);
+    sync(armAngle.get());
+    return armAngle.on("change", sync);
   }, [armAngle]);
 
   useEffect(() => {
-    if (active) {
-      discControls.start({
-        rotate: 360,
-        transition: { duration: 3.5, ease: "linear", repeat: Infinity, repeatType: "loop" },
-      });
-      animate(armAngle, ACTIVE_ANGLE, { type: "tween", duration: 0.7, ease: [0.25, 0.1, 0.25, 1] });
-    } else {
-      discControls.stop();
-      animate(armAngle, INACTIVE_ANGLE, { type: "tween", duration: 0.5, ease: [0.25, 0.1, 0.25, 1] });
-    }
-  }, [active, discControls, armAngle]);
+    animate(armAngle, active ? ACTIVE_ANGLE : INACTIVE_ANGLE, {
+      type: "tween",
+      duration: active ? 0.7 : 0.5,
+      ease: [0.25, 0.1, 0.25, 1],
+    });
+  }, [active, armAngle]);
 
   return (
     <>
@@ -50,35 +61,15 @@ export function TrailControls() {
         aria-label={active ? "Turn off music trail" : "Turn on music trail"}
         className="transition-opacity hover:opacity-70 active:opacity-50"
       >
-        <svg
-          width="64"
-          height="56"
-          viewBox="0 0 32 28"
-          fill="none"
-          style={{ imageRendering: "pixelated" }}
-          shapeRendering="crispEdges"
-        >
-          <motion.g
-            animate={discControls}
-            style={{ transformOrigin: `${DISC_OX} ${DISC_OY}` }}
-          >
-            <circle cx="12" cy="15" r="10"  fill="#111" />
-            <circle cx="12" cy="15" r="8.5" fill="none" stroke="#1c1c1c" strokeWidth="0.6" />
-            <circle cx="12" cy="15" r="6.5" fill="none" stroke="#222"   strokeWidth="0.6" />
-            <circle cx="12" cy="15" r="4.5" fill="none" stroke="#1c1c1c" strokeWidth="0.6" />
-            <circle cx="12" cy="15" r="3"   fill="none" stroke="#222"   strokeWidth="0.6" />
-            <circle cx="12" cy="15" r="2.5" fill={active ? "#c0391e" : "#3a3a3a"} />
-            <rect x="9.5"  y="14.5" width="5" height="1" fill={active ? "#9b2d18" : "#2a2a2a"} />
-            <rect x="11.5" y="12.5" width="1" height="1" fill={active ? "rgba(255,255,255,0.42)" : "rgba(255,255,255,0.1)"} />
-            <circle cx="12" cy="15" r="0.9" fill="#d5d5d5" />
-          </motion.g>
+        <svg width="64" height="56" viewBox="0 0 32 28" fill="none">
+          <g ref={discRef}>
+            <image
+              href="/images/vinyl-record-icon.png"
+              x="2" y="5" width="20" height="20"
+            />
+          </g>
 
-          <circle cx="12" cy="15" r="10" fill="none" stroke="#2a2a2a" strokeWidth="0.35" />
-
-          <g
-            ref={armRef}
-            transform={`translate(${PIVOT_X} ${PIVOT_Y}) rotate(${INACTIVE_ANGLE})`}
-          >
+          <g ref={armRef} transform={`translate(${PIVOT_X} ${PIVOT_Y}) rotate(${INACTIVE_ANGLE})`}>
             <line x1="0" y1="0" x2="-1.1" y2="-2.3"
               stroke="#aaa" strokeWidth="0.9" strokeLinecap="square" />
             <rect x="-1.8" y="-3.0" width="1.5" height="1.5" fill="#666" />
