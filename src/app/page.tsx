@@ -5,6 +5,7 @@ import { TrailControls } from "@/components/TrailControls";
 import AnimatedTitleWrapper from "@/components/AnimatedTitleWrapper";
 import { LinkPreview } from "@/components/LinkPreview";
 import { RainbowText } from "@/components/RainbowText";
+import { CyclingPhrase } from "@/components/CyclingPhrase";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -55,7 +56,7 @@ export default function Home() {
           </LinkPreview>
         </div>
         <div data-no-trail className="text-gray-700 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
-          <p className="text-lg text-gray-800 inline-block">i build useful software</p>
+          <CyclingPhrase />
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
               <Handshake size={15} className="text-gray-300 shrink-0" />
