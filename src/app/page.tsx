@@ -6,6 +6,7 @@ import AnimatedTitleWrapper from "@/components/AnimatedTitleWrapper";
 import { LinkPreview } from "@/components/LinkPreview";
 import { RainbowText } from "@/components/RainbowText";
 import { CyclingPhrase } from "@/components/CyclingPhrase";
+import { BasketballWord } from "@/components/BasketballEasterEgg";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -50,12 +51,12 @@ export default function Home() {
         />
       </div>
       <div className="max-w-xl mx-auto px-8 pt-2 pb-16 text-center select-none">
-        <div data-no-trail className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
+        <div data-no-trail data-basketball-collider className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
           <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" className="group">
             <span className="group-hover:text-gray-900 transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
           </LinkPreview>
         </div>
-        <div data-no-trail className="text-gray-700 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
+        <div data-no-trail data-basketball-collider className="text-gray-700 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
           <CyclingPhrase />
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
@@ -72,7 +73,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Star size={15} className="text-gray-300 shrink-0" />
-              <span>basketball, music, travel, and always building</span>
+              <span><BasketballWord />, music, travel, and always building</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Briefcase size={15} className="text-gray-300 shrink-0" />

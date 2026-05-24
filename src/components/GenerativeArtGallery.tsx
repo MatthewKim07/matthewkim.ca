@@ -217,7 +217,7 @@ const galleryItems: GalleryItem[] = [
 export default function GenerativeArtGallery() {
   return (
     <div className="relative w-full min-h-screen bg-white flex flex-col items-center justify-center p-8 md:p-16 overflow-hidden">
-      <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div data-basketball-collider className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {galleryItems.map((item, index) => (
           <GalleryCard key={item.title} item={item} index={index} />
         ))}
