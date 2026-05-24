@@ -119,7 +119,6 @@ export function CyclingPhrase() {
   const handleClick = () => {
     setIdx((prev) => getNextRandom(prev, PHRASES.length));
     setAnimKey((k) => k + 1);
-    startResetTimer();
   };
 
   const handleMouseEnter = () => clearResetTimer();
