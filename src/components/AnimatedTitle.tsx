@@ -5,25 +5,20 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 const NAME = "Matthew Kim";
 const CHARS = NAME.split("");
-const KIM_START = 8; // index of "K" in CHARS ("Matthew " = 8 chars)
+const KIM_START = 8;
 
-// ── Tunable ───────────────────────────────────────────────────────────────
-const INTRO_DURATION_MS = (0.55 + 1.3) * 1000; // max seed delay + spring settle
-const REVEAL_RADIUS     = 55;   // px — horizontal reveal radius per mark
-const REVEAL_RADIUS_Y   = 200;  // px — vertical radius; large so a single mark fills full KIM height
-const FADE_IN_MS        = 1400; // ms — fade-in duration (mirrors fade-out)
-const MARK_LIFETIME_MS  = 2000; // ms — mark stays at full opacity
-const FADE_DURATION_MS  = 1400; // ms — fade-out after lifetime ends
-const MERGE_RADIUS      = 40;   // px — refresh nearby mark instead of stacking a new one
-const MIN_MOVE_PX       = 12;   // px — min travel before adding a new mark
-const MAX_MARKS         = 20;   // cap for KIM (only 3 letters, fewer needed)
-// Flag image layer controls — only affect the hidden background, never the text.
-// Asset (1764×891) is pre-framed at ~2:1 to match the KIM element's natural proportions.
-// FLAG_SCALE must be > 1.0 to create vertical overflow, which FLAG_Y_OFFSET needs to work.
-const FLAG_SCALE    = 1.15;  // 1.0 = fills height; >1 gives room for Y nudge (1.15 = minimal)
-const FLAG_X        = 50;    // background-position X (%, 0 = left, 100 = right)
-const FLAG_Y_OFFSET = -6;    // px — moves flag up (negative) or down (positive) from center
-// ──────────────────────────────────────────────────────────────────────────
+const INTRO_DURATION_MS = (0.55 + 1.3) * 1000;
+const REVEAL_RADIUS     = 55;
+const REVEAL_RADIUS_Y   = 200;
+const FADE_IN_MS        = 1400;
+const MARK_LIFETIME_MS  = 2000;
+const FADE_DURATION_MS  = 1400;
+const MERGE_RADIUS      = 40;
+const MIN_MOVE_PX       = 12;
+const MAX_MARKS         = 20;
+const FLAG_SCALE    = 1.15;
+const FLAG_X        = 50;
+const FLAG_Y_OFFSET = -6;
 
 interface LetterSeed {
   x: number;
@@ -36,22 +31,27 @@ interface LetterSeed {
 }
 
 function buildSeeds(count: number): LetterSeed[] {
-  return Array.from({ length: count }, () => ({
-    x: (Math.random() - 0.5) * 1400,
-    y: (Math.random() - 0.5) * 900,
-    rotate: (Math.random() - 0.5) * 540,
-    scale: Math.random() * 1.5 + 0.2,
-    delay: Math.random() * 0.55,
-    stiffness: 40 + Math.random() * 60,
-    damping: 10 + Math.random() * 10,
+  const rand = (index: number, salt: number) => {
+    const x = Math.sin((index + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+
+  return Array.from({ length: count }, (_, i) => ({
+    x: (rand(i, 1) - 0.5) * 1400,
+    y: (rand(i, 2) - 0.5) * 900,
+    rotate: (rand(i, 3) - 0.5) * 540,
+    scale: rand(i, 4) * 1.5 + 0.2,
+    delay: rand(i, 5) * 0.55,
+    stiffness: 40 + rand(i, 6) * 60,
+    damping: 10 + rand(i, 7) * 10,
   }));
 }
 
 interface Mark {
   x: number;
   y: number;
-  created: number;     // when mark was first placed — drives fade-in
-  lastRefresh: number; // when mark was last refreshed — drives hold + fade-out
+  created: number;
+  lastRefresh: number;
 }
 
 function buildMaskSvg(marks: Mark[], w: number, h: number, now: number): string {
@@ -63,8 +63,6 @@ function buildMaskSvg(marks: Mark[], w: number, h: number, now: number): string 
     const refreshAge = now - m.lastRefresh;
     if (refreshAge >= MARK_LIFETIME_MS + FADE_DURATION_MS) continue;
 
-    // Fade in from placement, fade out from last refresh — take the minimum so
-    // the mark can't appear brighter than either curve allows.
     const fadeIn  = Math.min(1, (now - m.created) / FADE_IN_MS);
     const fadeOut = refreshAge < MARK_LIFETIME_MS
       ? 1
@@ -102,8 +100,8 @@ export default function AnimatedTitle({
 }) {
   const [seeds] = useState(() => buildSeeds(CHARS.length));
   const [introComplete, setIntroComplete] = useState(false);
-  const kimRef    = useRef<HTMLSpanElement>(null); // wrapper around KIM
-  const flagRef   = useRef<HTMLSpanElement>(null); // flag overlay inside KIM wrapper
+  const kimRef    = useRef<HTMLSpanElement>(null);
+  const flagRef   = useRef<HTMLSpanElement>(null);
   const marksRef  = useRef<Mark[]>([]);
   const rafRef    = useRef<number | undefined>(undefined);
   const activeRef = useRef(false);
@@ -125,7 +123,6 @@ export default function AnimatedTitle({
     const now = performance.now();
     const marks = marksRef.current;
 
-    // Refresh nearby marks — only reset lastRefresh, keep created so fade-in isn't restarted
     let refreshed = false;
     const updated = marks.map((m) => {
       if (Math.hypot(x - m.x, y - m.y) < MERGE_RADIUS) {
@@ -146,14 +143,12 @@ export default function AnimatedTitle({
     }
   }, []);
 
-  // rAF: prune expired marks, rebuild SVG mask, write directly to DOM
   useEffect(() => {
     const tick = () => {
       const now = performance.now();
       const maxAge = MARK_LIFETIME_MS + FADE_DURATION_MS;
       const span = flagRef.current;
 
-      // Prune marks whose lastRefresh has fully expired
       marksRef.current = marksRef.current.filter(m => now - m.lastRefresh < maxAge);
 
       if (span) {
@@ -191,7 +186,6 @@ export default function AnimatedTitle({
       style={{ fontFamily, position: "relative" }}
       className={className}
     >
-      {/* MATTHEW + space: plain animated letters, no overlay ever */}
       {CHARS.slice(0, KIM_START).map((char, i) => {
         const s = seeds[i];
         return (
@@ -214,14 +208,12 @@ export default function AnimatedTitle({
         );
       })}
 
-      {/* KIM: inline-block wrapper so the flag overlay positions relative to it */}
       <span
         ref={kimRef}
         data-no-trail
         style={{ position: "relative", display: "inline-block" }}
         onMouseMove={handleMouseMove}
       >
-        {/* Base KIM letters — always dark, never modified */}
         {CHARS.slice(KIM_START).map((char, i) => {
           const s = seeds[KIM_START + i];
           return (
@@ -243,7 +235,6 @@ export default function AnimatedTitle({
           );
         })}
 
-        {/* Flag overlay — mounts after intro, hidden until hover, clipped to KIM letter shapes */}
         {introComplete && (
           <span
             ref={flagRef}
