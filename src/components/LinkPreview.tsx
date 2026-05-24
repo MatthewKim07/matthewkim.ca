@@ -15,6 +15,7 @@ type LinkPreviewProps = {
   width?: number;
   height?: number;
   quality?: number;
+  annotation?: string;
 } & (
   | { isStatic: true; imageSrc: string; videoSrc?: never }
   | { isStatic: true; videoSrc: string; imageSrc?: never }
@@ -31,7 +32,8 @@ export const LinkPreview = ({
   isStatic = false,
   imageSrc = "",
   videoSrc,
-}: LinkPreviewProps & { videoSrc?: string }) => {
+  annotation,
+}: LinkPreviewProps & { videoSrc?: string; annotation?: string }) => {
   let src: string;
   if (!isStatic) {
     const params = encode({
@@ -114,7 +116,7 @@ export const LinkPreview = ({
                   transition: { type: "spring", stiffness: 260, damping: 20 },
                 }}
                 exit={{ opacity: 0, y: 20, scale: 0.6 }}
-                className="shadow-xl rounded-xl"
+                className="shadow-xl rounded-xl relative"
                 style={{ x: translateX }}
               >
                 <Link
@@ -148,6 +150,26 @@ export const LinkPreview = ({
                     />
                   )}
                 </Link>
+                {annotation && (
+                  <span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      right: "calc(100% + 10px)",
+                      bottom: "28%",
+                      transform: "rotate(-4deg)",
+                      fontFamily: "var(--font-caveat)",
+                      fontSize: "20px",
+                      lineHeight: 1,
+                      color: "#ef4444",
+                      whiteSpace: "nowrap",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  >
+                    {annotation} -&gt;
+                  </span>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import { Caveat } from "next/font/google";
 import { Handshake, Lightbulb, Trophy, Star, Briefcase, Mail } from "lucide-react";
 import GenerativeArtGallery from "@/components/GenerativeArtGallery";
 import { TrailControls } from "@/components/TrailControls";
@@ -21,9 +22,11 @@ const sf = localFont({
   variable: "--font-sf",
 });
 
+const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
+
 export default function Home() {
   return (
-    <div className={`${milker.variable} ${sf.variable} bg-white overflow-x-hidden`}>
+    <div className={`${milker.variable} ${sf.variable} ${caveat.variable} bg-white overflow-x-hidden`}>
       <nav data-no-trail className="fixed top-0 right-0 p-5 flex items-center gap-4 z-40">
         <a href="mailto:matthewminchulkim@gmail.com" className="text-gray-400 hover:text-gray-700 transition-colors">
           <Mail size={17} strokeWidth={1.5} />
@@ -61,7 +64,7 @@ export default function Home() {
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
               <Handshake size={15} className="text-gray-300 shrink-0" />
-              <span>prev software developer @UWaterloo</span>
+              <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" className="group" annotation="Something I built"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Lightbulb size={15} className="text-gray-300 shrink-0" />
