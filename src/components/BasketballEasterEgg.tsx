@@ -15,7 +15,10 @@ const SPAWN_ANIM_MS    = 280;   // ms, pop-in scale animation duration
 const LIFETIME_MS      = 10000; // ms, total ball lifetime
 const FADE_START_MS    = 8000;  // ms, when fade begins
 const FADE_DURATION_MS = 2000;  // ms, fade duration
-const COLLIDER_SEL     = "[data-basketball-collider]"; // marks solid page elements
+const COLLIDER_SEL          = "[data-basketball-collider]"; // marks solid page elements
+const MAX_BALLS             = 5;    // max concurrent balls
+const BALL_COLLISION_DAMPING = 0.88; // energy kept on ball-to-ball bounce
+const MAX_BALL_SPEED        = 18;   // px/frame, post-collision speed cap
 
 interface Ball {
   id: string;
@@ -142,6 +145,44 @@ export function BasketballWord() {
     });
 
     toDelete.forEach(id => ballsRef.current.delete(id));
+
+    // Ball-to-ball collision
+    const ballArray = Array.from(ballsRef.current.values());
+    for (let i = 0; i < ballArray.length; i++) {
+      for (let j = i + 1; j < ballArray.length; j++) {
+        const a = ballArray[i];
+        const b = ballArray[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const distSq = dx * dx + dy * dy;
+        const minDist = r * 2;
+        if (distSq >= minDist * minDist) continue;
+        const dist = Math.sqrt(distSq);
+        const nx = dist < 0.001 ? 1 : dx / dist;
+        const ny = dist < 0.001 ? 0 : dy / dist;
+        const overlap = minDist - dist;
+        a.x += nx * overlap / 2;
+        a.y += ny * overlap / 2;
+        b.x -= nx * overlap / 2;
+        b.y -= ny * overlap / 2;
+        const relVx = a.vx - b.vx;
+        const relVy = a.vy - b.vy;
+        const dot = relVx * nx + relVy * ny;
+        if (dot < 0) {
+          const imp = -(1 + BALL_COLLISION_DAMPING) / 2 * dot;
+          a.vx += imp * nx; a.vy += imp * ny;
+          b.vx -= imp * nx; b.vy -= imp * ny;
+        }
+      }
+    }
+    ballsRef.current.forEach(b => {
+      const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+      if (spd > MAX_BALL_SPEED) {
+        b.vx = b.vx / spd * MAX_BALL_SPEED;
+        b.vy = b.vy / spd * MAX_BALL_SPEED;
+      }
+    });
+
     setBalls(Array.from(ballsRef.current.values()).map(b => ({ ...b })));
 
     if (ballsRef.current.size > 0) {
@@ -157,6 +198,7 @@ export function BasketballWord() {
 
   const launch = useCallback(
     (wordRect: DOMRect) => {
+      if (ballsRef.current.size >= MAX_BALLS) return;
       collidersRef.current = getColliders();
       const dir = Math.random() > 0.5 ? 1 : -1;
       const id = String(_id++);
