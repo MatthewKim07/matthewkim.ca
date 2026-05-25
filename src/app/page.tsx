@@ -57,7 +57,7 @@ export default function Home() {
           className="text-center text-6xl md:text-8xl text-gray-900 cursor-default select-none"
         />
       </div>
-      <div className="max-w-xl mx-auto px-8 pt-2 pb-16 text-center select-none">
+      <div className="max-w-xl mx-auto px-8 pt-2 pb-12 text-center select-none">
         <div data-no-trail data-basketball-collider className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
           <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" className="group">
             <span className="group-hover:text-gray-900 transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
@@ -95,7 +95,7 @@ export default function Home() {
       >
         my experience
       </h2>
-      <div className="grid grid-cols-2 max-w-lg mx-auto mb-24 px-8">
+      <div className="grid grid-cols-2 max-w-lg mx-auto pb-12 px-8 pt-8">
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}>University of Waterloo</h3>
           <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}>Libraries</h4>

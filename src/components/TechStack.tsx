@@ -154,8 +154,8 @@ export function TechStack() {
   return (
     <section className="max-w-3xl mx-auto px-8 pt-4 pb-16 mt-12 select-none">
       <p
-        className="text-2xl text-gray-900 tracking-wide mb-0 text-center font-semibold"
-        style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
+        className="text-2xl font-semibold text-gray-900 text-center mb-8"
+        style={{ fontFamily: "var(--font-sf)" }}
       >
         tech i use
       </p>
