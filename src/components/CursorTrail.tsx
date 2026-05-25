@@ -69,14 +69,42 @@ const albums = [
   "/images/albums/yeezus-album-cover.jpeg",
 ];
 
+const INTERACTIVE_TAGS = new Set(["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA", "LABEL", "NAV"]);
+
+function isBlankArea(el: Element | null): boolean {
+  if (!el) return true;
+
+  // Walk ancestors up to body
+  let node: Element | null = el;
+  while (node && node !== document.body) {
+    // Explicit opt-out
+    if (node.hasAttribute("data-no-trail")) return false;
+    // Interactive elements
+    if (INTERACTIVE_TAGS.has(node.tagName)) return false;
+    if (node.getAttribute("role") === "button") return false;
+    node = node.parentElement;
+  }
+
+  // Disable over any element (or its direct parent) that has visible text nodes
+  const candidates = [el, el.parentElement].filter((n): n is Element => n !== null);
+  for (const candidate of candidates) {
+    for (const child of Array.from(candidate.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE && (child.textContent?.trim().length ?? 0) > 0) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function CursorTrail({ active }: { active: boolean }) {
   const [zoneEnabled, setZoneEnabled] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      const onNoTrail = !!el?.closest("[data-no-trail]");
-      setZoneEnabled(!onNoTrail);
+      setZoneEnabled(isBlankArea(el));
     };
     document.addEventListener("mousemove", handleMouseMove);
     return () => document.removeEventListener("mousemove", handleMouseMove);
