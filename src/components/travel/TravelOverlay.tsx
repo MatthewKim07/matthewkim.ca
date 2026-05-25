@@ -1,27 +1,20 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import NextImage from "next/image";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { X } from "lucide-react";
+import { House } from "lucide-react";
 import { useTravelPlayer } from "@/context/TravelContext";
 import { DraggableContainer } from "./DraggableGallery";
+import { PLANE_DURATION, PLANE_START, PLANE_END, easeInOutCubic, ThreeAirplaneTransition } from "./ThreeAirplaneTransition";
 import { TRAVEL_PHOTOS, STACKED_BELOW, type TravelPhoto } from "@/data/travel";
 
 // Tunables
-const PLANE_DURATION_S = 1.8;
-const WIPE_SKEW_PX     = 120;
+const WIPE_SKEW_PX     = 120;  // diagonal softness of the reveal edge (px)
+const PLANE_LEAD_PX    = 60;   // how far the plane center leads the reveal edge (px)
 const CLOSE_DURATION_S = 0.5;
-const OVERSHOOT_PX     = 180;
 
-function AirplaneSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden>
-      <path d="M44 22.5L6 4l3.5 18.5L6 41l38-18.5z" fill="white" opacity="0.92" />
-      <path d="M9.5 22.5l-5.5 7 5.5-2" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-    </svg>
-  );
-}
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
 function MasonryPhoto({ src, caption }: { src: string; caption: string }) {
   return (
@@ -127,17 +120,18 @@ function GalleryChrome({ onClose }: { onClose: () => void }) {
   return (
     <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-4">
       <span
-        className="text-white/40 text-sm tracking-wide select-none"
+        className="text-white text-sm tracking-wide select-none"
         style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
       >
-        places i&apos;ve been
+        my travels
       </span>
       <button
         onClick={onClose}
         aria-label="close travel gallery"
-        className="text-white/40 hover:text-white transition-colors outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded p-1"
+        className="flex items-center gap-1.5 text-white text-sm tracking-wide bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded-full px-4 py-1.5"
+        style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
       >
-        <X size={18} />
+        <House size={14} />return home
       </button>
     </div>
   );
@@ -145,23 +139,35 @@ function GalleryChrome({ onClose }: { onClose: () => void }) {
 
 export function TravelOverlay() {
   const { state, exit, _advanceToGallery, _advanceToIdle } = useTravelPlayer();
+  const enterAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
+  const enterTimerRef = useRef<number | null>(null);
+  const enterCompletedRef = useRef(false);
+  const exitAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
+  const exitTimerRef = useRef<number | null>(null);
+  const exitCompletedRef = useRef(false);
   const [prefersReducedMotion] = useState(
     () =>
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 
-  // motion values
-  const planeX        = useMotionValue(-OVERSHOOT_PX);
-  const planeY        = useMotionValue(0);
-  const overlayOp     = useMotionValue(0);
-  const contrailW     = useTransform(planeX, (px: number) => Math.max(0, px + OVERSHOOT_PX));
-  const contrailY     = useTransform(planeY, (py: number) => py + 22);
+  // Shared progress 0→1 drives both the Three.js plane and the clip-path reveal.
+  const progressRef = useRef<number>(0);
+  const rawProgress = useMotionValue(0);
+  const overlayOp   = useMotionValue(0);
 
-  // wipe clip-path: diagonal polygon that grows with plane x
-  const clipPath = useTransform(planeX, (px: number) => {
-    const vh = typeof window !== "undefined" ? window.innerHeight : 900;
-    const right = px + WIPE_SKEW_PX;
+  // Keep progressRef in sync so Three.js useFrame can read it each tick.
+  useEffect(() => rawProgress.on("change", (v) => { progressRef.current = v; }), [rawProgress]);
+
+  // Clip-path mirrors Three.js x-lerp exactly: (lerp(startX, endX, eased) + 0.5) * vw
+  // so the reveal boundary is always behind the actual plane position by PLANE_LEAD_PX.
+  const clipPath = useTransform(rawProgress, (t) => {
+    const eased = easeInOutCubic(t);
+    const vw = typeof window !== "undefined" ? window.innerWidth  : 1920;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
+    const planeScreenX = (lerp(PLANE_START[0], PLANE_END[0], eased) + 0.5) * vw;
+    const revealEdge   = planeScreenX - PLANE_LEAD_PX;
+    const right        = revealEdge + WIPE_SKEW_PX;
     return `polygon(0px 0px, ${right}px 0px, ${right - WIPE_SKEW_PX}px ${vh}px, 0px ${vh}px)`;
   });
 
@@ -183,39 +189,87 @@ export function TravelOverlay() {
     return () => window.removeEventListener("keydown", handler);
   }, [state, exit]);
 
+  const clearEnterAnimation = useCallback(() => {
+    enterAnimationRef.current?.stop();
+    enterAnimationRef.current = null;
+
+    if (enterTimerRef.current !== null) {
+      window.clearTimeout(enterTimerRef.current);
+      enterTimerRef.current = null;
+    }
+  }, []);
+
+  const clearExitAnimation = useCallback(() => {
+    exitAnimationRef.current?.stop();
+    exitAnimationRef.current = null;
+
+    if (exitTimerRef.current !== null) {
+      window.clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+  }, []);
+
   const runEnter = useCallback(() => {
+    clearEnterAnimation();
+    clearExitAnimation();
+    enterCompletedRef.current = false;
+
     if (prefersReducedMotion) {
       overlayOp.set(1);
-      planeX.set(window.innerWidth + OVERSHOOT_PX);
+      rawProgress.set(1);
+      progressRef.current = 1;
       _advanceToGallery();
       return;
     }
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
 
     overlayOp.set(1);
-    planeX.set(-OVERSHOOT_PX);
-    planeY.set(vh * 0.4);
+    rawProgress.set(0);
+    progressRef.current = 0;
 
-    // Fly plane across, then advance state.
-    animate(planeX, vw + OVERSHOOT_PX, {
-      duration: PLANE_DURATION_S,
-      ease: [0.18, 0, 0.55, 1],
-      onComplete: _advanceToGallery,
+    const completeEnter = () => {
+      if (enterCompletedRef.current) return;
+      enterCompletedRef.current = true;
+      rawProgress.set(1);
+      progressRef.current = 1;
+      clearEnterAnimation();
+      _advanceToGallery();
+    };
+
+    enterTimerRef.current = window.setTimeout(completeEnter, PLANE_DURATION * 1000 + 150);
+
+    // Linear 0→1; easeInOutCubic is applied inside the clipPath transform and Three.js useFrame
+    // so both systems apply identical easing from the same raw value.
+    enterAnimationRef.current = animate(rawProgress, 1, {
+      duration: PLANE_DURATION,
+      ease: "linear",
+      onComplete: completeEnter,
     });
-    animate(planeY, vh * 0.34, {
-      duration: PLANE_DURATION_S,
-      ease: [0.4, 0, 0.6, 1],
-    });
-  }, [planeX, planeY, overlayOp, _advanceToGallery, prefersReducedMotion]);
+  }, [clearEnterAnimation, clearExitAnimation, rawProgress, overlayOp, _advanceToGallery, prefersReducedMotion]);
 
   const runExit = useCallback(() => {
-    animate(overlayOp, 0, {
+    clearEnterAnimation();
+    clearExitAnimation();
+    exitCompletedRef.current = false;
+
+    const completeExit = () => {
+      if (exitCompletedRef.current) return;
+      exitCompletedRef.current = true;
+      overlayOp.set(0);
+      clearExitAnimation();
+      _advanceToIdle();
+    };
+
+    exitTimerRef.current = window.setTimeout(
+      completeExit,
+      CLOSE_DURATION_S * 1000 + 150,
+    );
+
+    exitAnimationRef.current = animate(overlayOp, 0, {
       duration: CLOSE_DURATION_S,
       ease: "easeOut",
-      onComplete: _advanceToIdle,
+      onComplete: completeExit,
     });
-  }, [overlayOp, _advanceToIdle]);
+  }, [clearEnterAnimation, clearExitAnimation, overlayOp, _advanceToIdle]);
 
   // react to state changes
   useEffect(() => {
@@ -223,6 +277,13 @@ export function TravelOverlay() {
     if (state === "transitioning-out") runExit();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
+
+  useEffect(() => {
+    return () => {
+      clearEnterAnimation();
+      clearExitAnimation();
+    };
+  }, [clearEnterAnimation, clearExitAnimation]);
 
   if (state === "idle") return null;
 
@@ -239,37 +300,9 @@ export function TravelOverlay() {
         <GalleryScene />
       </motion.div>
 
-      {/* Airplane and contrail appear only during the enter transition. */}
+      {/* Airplane appears only during the enter transition and unmounts in gallery state. */}
       {isTransIn && !prefersReducedMotion && (
-        <>
-          {/* contrail */}
-          <motion.div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              height: 2,
-              width: contrailW,
-              y: contrailY,
-              background:
-                "linear-gradient(to right, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.45) 100%)",
-              pointerEvents: "none",
-            }}
-          />
-          {/* plane */}
-          <motion.div
-            style={{
-              position: "absolute",
-              x: planeX,
-              y: planeY,
-              translateY: "-50%",
-              pointerEvents: "none",
-              filter: "drop-shadow(0 0 10px rgba(255,255,255,0.25))",
-            }}
-          >
-            <AirplaneSVG />
-          </motion.div>
-        </>
+        <ThreeAirplaneTransition progressRef={progressRef} />
       )}
 
       {/* Close button and title are visible once fully revealed. */}
