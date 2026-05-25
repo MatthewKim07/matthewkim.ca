@@ -1,10 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTravelPlayer } from "@/context/TravelContext";
 
 export function TravelWord() {
   const { enter, state } = useTravelPlayer();
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (state !== "transitioning-out" && state !== "idle") return;
+    const id = setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 0);
+    return () => clearTimeout(id);
+  }, [state]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -16,10 +23,11 @@ export function TravelWord() {
     [enter]
   );
 
-  const disabled = state !== "idle";
+  const disabled = state === "transitioning-in" || state === "gallery";
 
   return (
     <button
+      ref={btnRef}
       onClick={enter}
       onKeyDown={handleKeyDown}
       disabled={disabled}
