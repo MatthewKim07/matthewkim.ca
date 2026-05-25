@@ -203,12 +203,12 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
 };
 
 const galleryItems: GalleryItem[] = [
-  { title: "Compilot", slug: "compilot", category: "Web Development", image: "/images/compilot.png" },
-  { title: "Chef It", slug: "chef-it", category: "UI/UX Design", image: "/images/chef-it.png" },
-  { title: "You vs You", slug: "you-vs-you", category: "Branding", image: "/images/you-vs-you.png" },
-  { title: "Vibe Learn", slug: "vibe-learn", category: "Mobile App", image: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop" },
-  { title: "WaterlooWorks+", slug: "waterlooworks-plus", category: "Data Visualization", image: "/images/waterloo-works-plus.png" },
-  { title: "Clarus", slug: "clarus", category: "AI Integration", image: "/images/clarus.png" },
+  { title: "Compilot", slug: "compilot", category: "AI Agent", image: "/images/compilot.png" },
+  { title: "Chef It", slug: "chef-it", category: "iOS App", image: "/images/chef-it.png" },
+  { title: "You vs You", slug: "you-vs-you", category: "AI-Powered Game", image: "/images/you-vs-you.png" },
+  { title: "Vibe Learn", slug: "vibe-learn", category: "VS Code Extension", image: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop" },
+  { title: "WaterlooWorks+", slug: "waterlooworks-plus", category: "Chrome Extension", image: "/images/waterloo-works-plus.png" },
+  { title: "Clarus", slug: "clarus", category: "Academic Dashboard", image: "/images/clarus.png" },
 ];
 
 export default function GenerativeArtGallery() {
