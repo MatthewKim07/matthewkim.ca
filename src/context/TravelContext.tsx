@@ -20,7 +20,7 @@ export function TravelProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<TravelState>("idle");
 
   const enter             = useCallback(() => setState((s) => s === "idle" ? "transitioning-in" : s), []);
-  const exit              = useCallback(() => setState((s) => s === "gallery" ? "transitioning-out" : s), []);
+  const exit              = useCallback(() => setState((s) => (s === "gallery" || s === "transitioning-in") ? "transitioning-out" : s), []);
   const _advanceToGallery = useCallback(() => setState("gallery"), []);
   const _advanceToIdle    = useCallback(() => setState("idle"), []);
 
