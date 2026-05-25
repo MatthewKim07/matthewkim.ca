@@ -25,28 +25,38 @@ function AirplaneSVG() {
 
 function MasonryPhoto({ src, caption }: { src: string; caption: string }) {
   return (
-    <div style={{ position: "relative", width: COL_W, height: IMG_H, flexShrink: 0, overflow: "hidden", borderRadius: 4 }}>
+    <div
+      style={{
+        position: "relative",
+        width: COL_W,
+        height: IMG_H,
+        flexShrink: 0,
+        overflow: "hidden",
+        borderRadius: 4,
+        backgroundColor: "#141414",
+      }}
+    >
       <NextImage
         src={src}
         alt={caption}
         fill
         draggable={false}
         loading="eager"
-        quality={70}
+        quality={75}
         sizes={`${COL_W}px`}
-        style={{ objectFit: "cover" }}
+        style={{ objectFit: "cover", objectPosition: "center" }}
       />
     </div>
   );
 }
 
 // colW=320px, gap=24px; tileW = 4 * 320 + 3 * 24 + 24 trailing = 1376px.
-// Every image is cropped into the same fixed display cell; source files are untouched.
+// Every image uses the same fixed display cell; source files are untouched.
 const COL_W = 320;
 const COL_GAP = 24;
 const COL_COUNT = 4;
 const TILE_W = COL_COUNT * COL_W + (COL_COUNT - 1) * COL_GAP + COL_GAP; // 1376
-const IMG_H = Math.round(COL_W * 1308 / 736); // 569
+const IMG_H = Math.round(COL_W * 4 / 3); // 427, matching the majority iPhone portrait photos
 
 type PhotoItem =
   | { kind: "single"; photo: TravelPhoto }
