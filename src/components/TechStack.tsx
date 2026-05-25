@@ -159,7 +159,7 @@ export function TechStack() {
       >
         tech i use
       </p>
-      <div data-no-trail className="flex flex-col gap-12 mt-8">
+      <div data-no-trail className="flex flex-col gap-12 mt-16">
         <TechRow label="languages"              items={LANGUAGES}   speed={0.7} direction="forward"  />
         <TechRow label="libraries & frameworks"  items={FRAMEWORKS}  speed={0.9} direction="backward" startIndex={FRAMEWORKS.length - 1} />
         <TechRow label="tools"                  items={TOOLS}       speed={0.8} direction="forward"  />

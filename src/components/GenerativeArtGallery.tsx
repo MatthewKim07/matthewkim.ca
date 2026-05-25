@@ -142,7 +142,7 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
       variants={cardVariants}
       initial="offscreen"
       whileInView="onscreen"
-      viewport={{ once: true, amount: 0.5 }}
+      viewport={{ once: true, amount: 0 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onHoverStart={() => setIsHovered(true)}

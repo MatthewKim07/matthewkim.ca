@@ -88,6 +88,12 @@ export default function Home() {
           </ul>
         </div>
       </div>
+      <h2
+        className="text-2xl font-semibold text-gray-900 text-center mb-8 mt-12"
+        style={{ fontFamily: "var(--font-sf)" }}
+      >
+        some of my projects
+      </h2>
       <GenerativeArtGallery />
       <TechStack />
     </div>
