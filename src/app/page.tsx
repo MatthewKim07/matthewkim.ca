@@ -65,23 +65,23 @@ export default function Home() {
           <CyclingPhrase />
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
-              <Handshake size={15} className="text-gray-300 shrink-0" />
+              <Handshake size={15} className="text-gray-500 shrink-0" />
               <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" className="group" annotation="Something I built"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Lightbulb size={15} className="text-gray-300 shrink-0" />
+              <Lightbulb size={15} className="text-gray-500 shrink-0" />
               <span>interested in software engineering and robotics</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Trophy size={15} className="text-gray-300 shrink-0" />
+              <Trophy size={15} className="text-gray-500 shrink-0" />
               <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Star size={15} className="text-gray-300 shrink-0" />
+              <Star size={15} className="text-gray-500 shrink-0" />
               <span><BasketballWord />, <MusicWord />, <TravelWord />, and always building</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Briefcase size={15} className="text-gray-300 shrink-0" />
+              <Briefcase size={15} className="text-gray-500 shrink-0" />
               <span>seeking fall 2026 internship opportunities</span>
             </li>
           </ul>
