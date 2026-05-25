@@ -6,7 +6,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { House } from "lucide-react";
 import { useTravelPlayer } from "@/context/TravelContext";
 import { DraggableContainer } from "./DraggableGallery";
-import { PLANE_DURATION, PLANE_START, PLANE_END, easeInOutCubic, ThreeAirplaneTransition } from "./ThreeAirplaneTransition";
+import { PLANE_DURATION, PLANE_START, PLANE_END, EXIT_PLANE_DURATION, EXIT_PLANE_START, EXIT_PLANE_END, easeInOutCubic, ThreeAirplaneTransition, ThreeAirplaneExitTransition } from "./ThreeAirplaneTransition";
 import { TRAVEL_PHOTOS, STACKED_BELOW, type TravelPhoto } from "@/data/travel";
 
 // Tunables
@@ -156,14 +156,20 @@ export function TravelOverlay() {
   const rawProgress = useMotionValue(0);
   const overlayOp   = useMotionValue(0);
 
-  // Keep progressRef in sync so Three.js useFrame can read it each tick.
-  useEffect(() => rawProgress.on("change", (v) => { progressRef.current = v; }), [rawProgress]);
+  // Exit progress 0→1 drives the A380 landing transition.
+  const exitProgressRef = useRef<number>(0);
+  const exitRawProgress = useMotionValue(0);
+
+  // Keep progressRefs in sync so Three.js useFrame can read them each tick.
+  useEffect(() => rawProgress.on("change",     (v) => { progressRef.current     = v; }), [rawProgress]);
+  useEffect(() => exitRawProgress.on("change", (v) => { exitProgressRef.current = v; }), [exitRawProgress]);
 
   // Fades in once the clip-path covers the viewport (~progress 0.52), before the animation timer fires.
   const chromeOp = useTransform(rawProgress, [0.5, 0.57], [0, 1]);
+  // Fades out immediately when exit starts.
+  const chromeExitOp = useTransform(exitRawProgress, [0, 0.12], [1, 0]);
 
-  // Clip-path mirrors Three.js x-lerp exactly: (lerp(startX, endX, eased) + 0.5) * vw
-  // so the reveal boundary is always behind the actual plane position by PLANE_LEAD_PX.
+  // Enter: clip-path grows left→right, revealing the gallery behind the plane.
   const clipPath = useTransform(rawProgress, (t) => {
     const eased = easeInOutCubic(t);
     const vw = typeof window !== "undefined" ? window.innerWidth  : 1920;
@@ -171,6 +177,16 @@ export function TravelOverlay() {
     const planeScreenX = (lerp(PLANE_START[0], PLANE_END[0], eased) + 0.5) * vw;
     const revealEdge   = planeScreenX - PLANE_LEAD_PX;
     const right        = revealEdge + WIPE_SKEW_PX;
+    return `polygon(0px 0px, ${right}px 0px, ${right - WIPE_SKEW_PX}px ${vh}px, 0px ${vh}px)`;
+  });
+
+  // Exit: clip-path shrinks right→left, hiding the gallery behind the A380.
+  const exitClipPath = useTransform(exitRawProgress, (t) => {
+    const eased = easeInOutCubic(t);
+    const vw = typeof window !== "undefined" ? window.innerWidth  : 1920;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
+    const planeScreenX = (lerp(EXIT_PLANE_START[0], EXIT_PLANE_END[0], eased) + 0.5) * vw;
+    const right = planeScreenX + PLANE_LEAD_PX;
     return `polygon(0px 0px, ${right}px 0px, ${right - WIPE_SKEW_PX}px ${vh}px, 0px ${vh}px)`;
   });
 
@@ -253,6 +269,13 @@ export function TravelOverlay() {
     clearEnterAnimation();
     clearExitAnimation();
     exitCompletedRef.current = false;
+    exitRawProgress.set(0);
+
+    if (prefersReducedMotion) {
+      overlayOp.set(0);
+      _advanceToIdle();
+      return;
+    }
 
     const completeExit = () => {
       if (exitCompletedRef.current) return;
@@ -262,17 +285,14 @@ export function TravelOverlay() {
       _advanceToIdle();
     };
 
-    exitTimerRef.current = window.setTimeout(
-      completeExit,
-      CLOSE_DURATION_S * 1000 + 150,
-    );
+    exitTimerRef.current = window.setTimeout(completeExit, EXIT_PLANE_DURATION * 1000 + 150);
 
-    exitAnimationRef.current = animate(overlayOp, 0, {
-      duration: CLOSE_DURATION_S,
-      ease: "easeOut",
+    exitAnimationRef.current = animate(exitRawProgress, 1, {
+      duration: EXIT_PLANE_DURATION,
+      ease: "linear",
       onComplete: completeExit,
     });
-  }, [clearEnterAnimation, clearExitAnimation, overlayOp, _advanceToIdle]);
+  }, [clearEnterAnimation, clearExitAnimation, exitRawProgress, overlayOp, _advanceToIdle, prefersReducedMotion]);
 
   // react to state changes
   useEffect(() => {
@@ -290,7 +310,8 @@ export function TravelOverlay() {
 
   if (state === "idle") return null;
 
-  const isTransIn = state === "transitioning-in";
+  const isTransIn  = state === "transitioning-in";
+  const isTransOut = state === "transitioning-out";
 
   return (
     <motion.div
@@ -298,17 +319,20 @@ export function TravelOverlay() {
       className="fixed inset-0 z-[70]"
     >
       {/* Gallery stays mounted; clip-path covers the viewport once the plane exits. */}
-      <motion.div style={{ clipPath, position: "absolute", inset: 0, backgroundColor: "#141414" }}>
+      <motion.div style={{ clipPath: isTransOut ? exitClipPath : clipPath, position: "absolute", inset: 0, backgroundColor: "#141414" }}>
         <GalleryScene />
       </motion.div>
 
-      {/* Airplane appears only during the enter transition and unmounts in gallery state. */}
-      {isTransIn && !prefersReducedMotion && (
+      {/* Enter: 787 flies left → right. Exit: A380 descends right → left. */}
+      {isTransIn  && !prefersReducedMotion && (
         <ThreeAirplaneTransition progressRef={progressRef} />
+      )}
+      {isTransOut && !prefersReducedMotion && (
+        <ThreeAirplaneExitTransition progressRef={exitProgressRef} />
       )}
 
       {/* Chrome fades in once the reveal covers the viewport, not after the full animation timer. */}
-      <motion.div style={{ opacity: chromeOp }}>
+      <motion.div style={{ opacity: isTransOut ? chromeExitOp : chromeOp }}>
         <GalleryChrome onClose={exit} />
       </motion.div>
     </motion.div>
