@@ -10,6 +10,7 @@ import { CyclingPhrase } from "@/components/CyclingPhrase";
 import { BasketballWord } from "@/components/BasketballEasterEgg";
 import { MusicWord } from "@/components/MusicEasterEgg";
 import { TravelWord } from "@/components/travel/TravelWord";
+import { TechStack } from "@/components/TechStack";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -88,6 +89,7 @@ export default function Home() {
         </div>
       </div>
       <GenerativeArtGallery />
+      <TechStack />
     </div>
   );
 }
