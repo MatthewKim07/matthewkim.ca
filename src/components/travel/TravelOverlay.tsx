@@ -159,6 +159,9 @@ export function TravelOverlay() {
   // Keep progressRef in sync so Three.js useFrame can read it each tick.
   useEffect(() => rawProgress.on("change", (v) => { progressRef.current = v; }), [rawProgress]);
 
+  // Fades in once the clip-path covers the viewport (~progress 0.52), before the animation timer fires.
+  const chromeOp = useTransform(rawProgress, [0.5, 0.57], [0, 1]);
+
   // Clip-path mirrors Three.js x-lerp exactly: (lerp(startX, endX, eased) + 0.5) * vw
   // so the reveal boundary is always behind the actual plane position by PLANE_LEAD_PX.
   const clipPath = useTransform(rawProgress, (t) => {
@@ -288,7 +291,6 @@ export function TravelOverlay() {
   if (state === "idle") return null;
 
   const isTransIn = state === "transitioning-in";
-  const showChrome = state === "gallery" || state === "transitioning-out";
 
   return (
     <motion.div
@@ -305,8 +307,10 @@ export function TravelOverlay() {
         <ThreeAirplaneTransition progressRef={progressRef} />
       )}
 
-      {/* Close button and title are visible once fully revealed. */}
-      {showChrome && <GalleryChrome onClose={exit} />}
+      {/* Chrome fades in once the reveal covers the viewport, not after the full animation timer. */}
+      <motion.div style={{ opacity: chromeOp }}>
+        <GalleryChrome onClose={exit} />
+      </motion.div>
     </motion.div>
   );
 }
