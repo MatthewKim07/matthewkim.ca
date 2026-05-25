@@ -67,7 +67,7 @@ export default function Home() {
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
               <Handshake size={15} className="text-gray-500 shrink-0" />
-              <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" className="group" annotation="Something I built"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
+              <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" className="group" annotation="Something I built" isStatic imageSrc="/images/swd-uwaterloo-preview-image.png"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Lightbulb size={15} className="text-gray-500 shrink-0" />
