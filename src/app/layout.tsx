@@ -6,6 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Matthew Kim",
   description: "Portfolio for Matthew Kim",
+  icons: { icon: "/bubby.png" },
 };
 
 export default function RootLayout({
