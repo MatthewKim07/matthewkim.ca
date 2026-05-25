@@ -186,6 +186,7 @@ export function TravelOverlay() {
   const runEnter = useCallback(() => {
     if (prefersReducedMotion) {
       overlayOp.set(1);
+      planeX.set(window.innerWidth + OVERSHOOT_PX);
       _advanceToGallery();
       return;
     }
@@ -231,10 +232,10 @@ export function TravelOverlay() {
   return (
     <motion.div
       style={{ opacity: overlayOp }}
-      className="fixed inset-0 z-[70] bg-[#141414]"
+      className="fixed inset-0 z-[70]"
     >
       {/* Gallery stays mounted; clip-path covers the viewport once the plane exits. */}
-      <motion.div style={{ clipPath, position: "absolute", inset: 0 }}>
+      <motion.div style={{ clipPath, position: "absolute", inset: 0, backgroundColor: "#141414" }}>
         <GalleryScene />
       </motion.div>
 
