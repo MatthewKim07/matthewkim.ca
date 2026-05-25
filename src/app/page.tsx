@@ -93,24 +93,24 @@ export default function Home() {
         className="text-2xl font-semibold text-gray-900 text-center mb-8 mt-12"
         style={{ fontFamily: "var(--font-sf)" }}
       >
-        my experience
+        <span data-basketball-collider className="inline-block">my experience</span>
       </h2>
       <div className="grid grid-cols-2 max-w-lg mx-auto pb-12 px-8 pt-8">
         <div className="flex flex-col items-center gap-3">
-          <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}>University of Waterloo</h3>
-          <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}>Libraries</h4>
+          <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
+          <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>
           <LinkPreview url="https://lib.uwaterloo.ca/web/" width={200} height={130} isStatic imageSrc="/images/uwaterloo-image-link-preview.png">
-            <Image src="/images/uwaterloo-logo.png" alt="University of Waterloo" width={160} height={160} className="object-contain" />
+            <Image data-basketball-collider src="/images/uwaterloo-logo.png" alt="University of Waterloo" width={160} height={160} className="object-contain" />
           </LinkPreview>
-          <span className="text-sm text-gray-500" style={{ fontFamily: "var(--font-sf)" }}>Software Developer</span>
+          <span data-basketball-collider className="text-sm text-gray-500" style={{ fontFamily: "var(--font-sf)" }}>Software Developer</span>
         </div>
         <div className="flex flex-col items-center gap-3">
-          <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}>Western University</h3>
-          <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}>FAST</h4>
+          <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Western University</span></h3>
+          <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">FAST</span></h4>
           <LinkPreview url="https://www.appropedia.org/FAST" width={200} height={130} isStatic imageSrc="/images/westernu-image-link-preview.png">
-            <Image src="/images/westernu-logo.png" alt="Western University" width={160} height={160} className="object-contain" />
+            <Image data-basketball-collider src="/images/westernu-logo.png" alt="Western University" width={160} height={160} className="object-contain" />
           </LinkPreview>
-          <span className="text-sm text-gray-500 text-center" style={{ fontFamily: "var(--font-sf)" }}>Engineering Research<br />Assistant</span>
+          <span data-basketball-collider className="text-sm text-gray-500 text-center" style={{ fontFamily: "var(--font-sf)" }}>Engineering Research<br />Assistant</span>
         </div>
       </div>
       <h2

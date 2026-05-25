@@ -209,15 +209,12 @@ const galleryItems: GalleryItem[] = [
   { title: "Vibe Learn", slug: "vibe-learn", category: "Mobile App", image: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop" },
   { title: "WaterlooWorks+", slug: "waterlooworks-plus", category: "Data Visualization", image: "/images/waterloo-works-plus.png" },
   { title: "Clarus", slug: "clarus", category: "AI Integration", image: "/images/clarus.png" },
-  { title: "PaintMind", slug: "paintmind", category: "Systems Design", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop" },
-  { title: "Pathfinding API", slug: "pathfinding-api", category: "Machine Learning", image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop" },
-  { title: "QueueMe", slug: "queueme", category: "Robotics", image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=400&auto=format&fit=crop" },
 ];
 
 export default function GenerativeArtGallery() {
   return (
     <div className="relative w-full min-h-screen bg-white flex flex-col items-center justify-center p-8 md:p-16 overflow-hidden">
-      <div data-basketball-collider className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div data-basketball-collider className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
         {galleryItems.map((item, index) => (
           <GalleryCard key={item.title} item={item} index={index} />
         ))}

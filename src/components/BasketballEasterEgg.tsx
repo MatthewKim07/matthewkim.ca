@@ -106,35 +106,37 @@ export function BasketballWord() {
         b.scale = 1;
       }
 
-      // Physics step
-      b.vy += GRAVITY;
-      b.vx *= LINEAR_DAMPING;
-      b.x  += b.vx;
-      b.y  += b.vy;
-      b.rotation += b.vx * SPIN_MULT;
+      // Physics — 3 substeps for stable narrow-gap collision resolution
+      const NUM_SUBSTEPS = 3;
+      const dampPerStep = Math.pow(LINEAR_DAMPING, 1 / NUM_SUBSTEPS);
+      for (let step = 0; step < NUM_SUBSTEPS; step++) {
+        b.vy += GRAVITY / NUM_SUBSTEPS;
+        b.vx *= dampPerStep;
+        b.x  += b.vx / NUM_SUBSTEPS;
+        b.y  += b.vy / NUM_SUBSTEPS;
 
-      // Viewport walls
-      if (b.x - r < 0)  { b.x = r;     b.vx =  Math.abs(b.vx) * RESTITUTION; }
-      if (b.x + r > W)  { b.x = W - r; b.vx = -Math.abs(b.vx) * RESTITUTION; }
-      if (b.y - r < 0)  { b.y = r;     b.vy =  Math.abs(b.vy) * RESTITUTION; }
-      if (b.y + r > H)  { b.y = H - r; b.vy = -Math.abs(b.vy) * RESTITUTION; }
+        // Viewport walls
+        if (b.x - r < 0)  { b.x = r;     b.vx =  Math.abs(b.vx) * RESTITUTION; }
+        if (b.x + r > W)  { b.x = W - r; b.vx = -Math.abs(b.vx) * RESTITUTION; }
+        if (b.y - r < 0)  { b.y = r;     b.vy =  Math.abs(b.vy) * RESTITUTION; }
+        if (b.y + r > H)  { b.y = H - r; b.vy = -Math.abs(b.vy) * RESTITUTION; }
 
-      // DOM element collisions (skipped during grace period so ball can escape spawn area)
-      if (elapsed > GRACE_MS) {
-        for (const rect of colliders) {
-          const hit = circleRect(b.x, b.y, r, rect);
-          if (!hit) continue;
-          // Push ball out of overlap
-          b.x += hit.nx * (hit.pen + 0.5);
-          b.y += hit.ny * (hit.pen + 0.5);
-          // Reflect velocity along collision normal
-          const dot = b.vx * hit.nx + b.vy * hit.ny;
-          if (dot < 0) {
-            b.vx -= (1 + RESTITUTION) * dot * hit.nx;
-            b.vy -= (1 + RESTITUTION) * dot * hit.ny;
+        // DOM element collisions (skipped during grace period so ball can escape spawn area)
+        if (elapsed > GRACE_MS) {
+          for (const rect of colliders) {
+            const hit = circleRect(b.x, b.y, r, rect);
+            if (!hit) continue;
+            b.x += hit.nx * (hit.pen + 0.5);
+            b.y += hit.ny * (hit.pen + 0.5);
+            const dot = b.vx * hit.nx + b.vy * hit.ny;
+            if (dot < 0) {
+              b.vx -= (1 + RESTITUTION) * dot * hit.nx;
+              b.vy -= (1 + RESTITUTION) * dot * hit.ny;
+            }
           }
         }
       }
+      b.rotation += b.vx * SPIN_MULT;
 
       // Fade
       b.opacity = elapsed >= FADE_START_MS
