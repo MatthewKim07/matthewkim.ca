@@ -6,7 +6,7 @@ import { useMusicPlayer } from "@/context/MusicContext";
 
 function EqualizerBars({ active }: { active: boolean }) {
   return (
-    <span className="inline-flex items-end gap-[2px] mb-[1px] text-gray-400" aria-hidden>
+    <span className="inline-flex items-end gap-[2px] mb-[1px]" aria-hidden>
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
