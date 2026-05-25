@@ -238,7 +238,7 @@ export function BasketballWord() {
       <button
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className="cursor-pointer hover:opacity-60 transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm"
+        className="cursor-pointer hover:text-orange-500 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm"
         aria-label="basketball (click for a surprise)"
       >
         basketball

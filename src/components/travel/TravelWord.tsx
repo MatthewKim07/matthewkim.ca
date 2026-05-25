@@ -24,7 +24,7 @@ export function TravelWord() {
       onKeyDown={handleKeyDown}
       disabled={disabled}
       aria-label="travel (click to open travel gallery)"
-      className="cursor-pointer hover:opacity-60 transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm disabled:opacity-40 disabled:cursor-default"
+      className="cursor-pointer hover:text-gray-900 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm disabled:opacity-40 disabled:cursor-default"
     >
       travel
     </button>

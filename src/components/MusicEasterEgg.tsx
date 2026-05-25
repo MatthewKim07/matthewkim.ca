@@ -43,7 +43,7 @@ export function MusicWord() {
       onKeyDown={handleKeyDown}
       aria-label={isPanelOpen ? "close music panel" : "music (click to open playlist)"}
       aria-expanded={isPanelOpen}
-      className="cursor-pointer hover:opacity-60 transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm inline-flex items-center gap-1.5"
+      className="cursor-pointer hover:text-green-500 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded-sm inline-flex items-center gap-1.5"
     >
       music
       <EqualizerBars active={isPlaying} />
