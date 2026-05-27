@@ -95,36 +95,37 @@ function getNextRandom(current: number, length: number): number {
   return next;
 }
 
-const RESET_MS = 3000;
+const AUTO_ADVANCE_MS = 3500;
 
 export function CyclingPhrase() {
   const [idx, setIdx] = useState(0);
   const [animKey, setAnimKey] = useState(0);
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idxRef = useRef(idx);
+  idxRef.current = idx;
 
-  const clearResetTimer = useCallback(() => {
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+  const scheduleNext = useCallback(() => {
+    if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+    autoTimerRef.current = setTimeout(() => {
+      setIdx((prev) => getNextRandom(prev, PHRASES.length));
+      setAnimKey((k) => k + 1);
+    }, AUTO_ADVANCE_MS);
   }, []);
 
-  const startResetTimer = useCallback(() => {
-    clearResetTimer();
-    resetTimerRef.current = setTimeout(() => {
-      setIdx(0);
-      setAnimKey((k) => k + 1);
-    }, RESET_MS);
-  }, [clearResetTimer]);
-
-  useEffect(() => () => clearResetTimer(), [clearResetTimer]);
+  useEffect(() => {
+    scheduleNext();
+    return () => { if (autoTimerRef.current) clearTimeout(autoTimerRef.current); };
+  }, [idx, scheduleNext]);
 
   const handleClick = () => {
     setIdx((prev) => getNextRandom(prev, PHRASES.length));
     setAnimKey((k) => k + 1);
   };
 
-  const handleMouseEnter = () => clearResetTimer();
-  const handleMouseLeave = () => {
-    if (idx !== 0) startResetTimer();
+  const handleMouseEnter = () => {
+    if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
   };
+  const handleMouseLeave = () => scheduleNext();
 
   return (
     <div className="relative h-7">
