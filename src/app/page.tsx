@@ -12,6 +12,7 @@ import { BasketballWord } from "@/components/BasketballEasterEgg";
 import { MusicWord } from "@/components/MusicEasterEgg";
 import { TravelWord } from "@/components/travel/TravelWord";
 import { TechStack } from "@/components/TechStack";
+import { BubbyGif } from "@/components/BubbyGif";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -124,8 +125,7 @@ export default function Home() {
       <footer className="bg-gray-900 mt-24 px-8 py-10 grid grid-cols-3 items-center" style={{ fontFamily: "var(--font-sf)" }}>
         <span className="text-white text-sm font-medium">Matthew Kim</span>
         <div className="flex justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bubby.gif" alt="Bubby" className="w-32 h-32 rounded-full object-cover" />
+          <BubbyGif />
         </div>
         <div className="flex items-center gap-3 justify-end">
           <a href="mailto:matthewminchulkim@gmail.com" aria-label="Email" className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-red-600 transition-colors">
