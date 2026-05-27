@@ -58,7 +58,7 @@ export const projects: Project[] = [
     slug: "you-vs-you",
     category: "Browser Game",
     image: "/images/you-vs-you.png",
-    video: "/videos/you-vs-you-demo.mp4",
+    video: "/videos/you-vs-you-demo2.mp4",
     tagline: "A game that studies how you play and adjusts to beat you",
     description:
       "A browser game where the challenge isn't fixed. It tracks your inputs and habits across runs, builds a model of your play style, then reshapes the levels and traps to target your patterns. The more consistent you are, the harder it gets.",
