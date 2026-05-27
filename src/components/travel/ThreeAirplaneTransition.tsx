@@ -7,9 +7,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // ─── enter (787, left → right) ──────────────────────────────────────────────
-export const PLANE_DURATION    = 3.7;
+export const PLANE_DURATION    = 5.0;
 export const PLANE_SCALE       = 5.2;
-export const PLANE_START       = [-0.72, -0.16, 0.35] as const;
+export const PLANE_START       = [-1.1,  -0.16, 0.35] as const;
 export const PLANE_END         = [1.5,    0.1, -0.85] as const;
 export const PLANE_HEIGHT      = 1.05;
 export const PLANE_BANK_AMOUNT = 0.28;

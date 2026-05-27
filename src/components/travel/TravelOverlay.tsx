@@ -123,7 +123,7 @@ function GalleryChrome({ onClose }: { onClose: () => void }) {
         className="text-white text-sm tracking-wide select-none"
         style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
       >
-        my travels
+        my adventures
       </span>
       <button
         onClick={onClose}
