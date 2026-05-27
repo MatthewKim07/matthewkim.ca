@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowUpRight } from "lucide-react";
+import { X, ArrowUpRight, Volume2, VolumeX } from "lucide-react";
 import { Project } from "@/data/projects";
 
 const TECH_ICONS: Record<string, string> = {
@@ -48,6 +48,7 @@ export function ProjectOverlay({
   onClose: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
 
   useEffect(() => {
     if (!project) return;
@@ -57,6 +58,10 @@ export function ProjectOverlay({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [project, onClose]);
+
+  useEffect(() => {
+    setMuted(true);
+  }, [project?.slug]);
 
   useEffect(() => {
     document.body.style.overflow = project ? "hidden" : "";
@@ -102,10 +107,10 @@ export function ProjectOverlay({
                     key={project.video}
                     src={project.video}
                     autoPlay
-                    muted
+                    muted={muted}
                     loop
                     playsInline
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -114,6 +119,15 @@ export function ProjectOverlay({
                     alt={project.title}
                     className="w-full h-full object-contain"
                   />
+                )}
+                {project.video && (
+                  <button
+                    onClick={() => setMuted((m) => !m)}
+                    className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white backdrop-blur-sm hover:bg-black/65 transition-colors"
+                    aria-label={muted ? "Unmute video" : "Mute video"}
+                  >
+                    {muted ? <VolumeX size={15} strokeWidth={1.5} /> : <Volume2 size={15} strokeWidth={1.5} />}
+                  </button>
                 )}
                 <button
                   onClick={onClose}
