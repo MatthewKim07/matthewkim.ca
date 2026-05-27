@@ -38,6 +38,8 @@ const TECH_ICONS: Record<string, string> = {
   "Manifest V3":   "/images/tech/Chrome.svg",
   "VS Code API":   "/images/tech/Visual Studio Code (VS Code).svg",
   "Ollama":        "/images/tech/ollama-icon.png",
+  "Celery":        "/images/tech/celery-icon.png",
+  "SwiftUI":       "/images/tech/swift-ui.svg",
 };
 
 export function ProjectOverlay({
@@ -165,89 +167,96 @@ export function ProjectOverlay({
                   {project.description}
                 </p>
 
-                {/* Stack + Links row */}
-                <div className="flex flex-wrap gap-8">
-                  <div>
-                    <p
-                      className="text-xs uppercase tracking-widest text-gray-400 mb-2"
-                      style={{ fontWeight: 500 }}
-                    >
-                      Stack
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {project.tech.map((t) => {
-                        const icon = TECH_ICONS[t];
-                        return (
-                          <span
-                            key={t}
-                            className="flex items-center gap-1.5 text-xs text-gray-600 border border-gray-200 rounded-full px-2.5 py-1"
-                          >
-                            {icon && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={icon} alt="" aria-hidden="true" className="w-3.5 h-3.5 object-contain" />
-                            )}
-                            {t}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {(project.links.github || project.links.live) && (
-                    <div>
-                      <p
-                        className="text-xs uppercase tracking-widest text-gray-400 mb-2"
-                        style={{ fontWeight: 500 }}
+                {/* Links */}
+                {(project.links.github || project.links.live) && (
+                  <div className="flex gap-5">
+                    {project.links.github && (
+                      <a
+                        href={project.links.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors"
                       >
-                        Links
-                      </p>
-                      <div className="flex gap-4">
-                        {project.links.github && (
-                          <a
-                            href={project.links.github}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                          >
-                            <ArrowUpRight size={13} strokeWidth={1.5} />
-                            GitHub
-                          </a>
-                        )}
-                        {project.links.live && (
-                          <a
-                            href={project.links.live}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                          >
-                            <ArrowUpRight size={13} strokeWidth={1.5} />
-                            Live
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                        <ArrowUpRight size={13} strokeWidth={1.5} />
+                        GitHub
+                      </a>
+                    )}
+                    {project.links.live && (
+                      <a
+                        href={project.links.live}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors"
+                      >
+                        <ArrowUpRight size={13} strokeWidth={1.5} />
+                        Live
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {/* Highlights */}
                 {project.highlights.length > 0 && (
-                  <div>
-                    <p
-                      className="text-xs uppercase tracking-widest text-gray-400 mb-3"
-                      style={{ fontWeight: 500 }}
-                    >
-                      Highlights
-                    </p>
-                    <div className="space-y-2">
-                      {project.highlights.map((h, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                          <span className="mt-2 w-1 h-1 rounded-full bg-gray-300 shrink-0" />
-                          <p className="text-sm text-gray-600">{h}</p>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="space-y-3">
+                    {project.highlights.map((h, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.22, delay: 0.1 + i * 0.07 }}
+                        className="flex items-start gap-4 group"
+                      >
+                        <span
+                          className="mt-0.5 text-xs text-gray-300 group-hover:text-gray-500 transition-colors shrink-0 tabular-nums"
+                          style={{ fontWeight: 500 }}
+                        >
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <p className="text-sm text-gray-500 group-hover:text-gray-900 transition-colors duration-150 leading-relaxed">
+                          {h}
+                        </p>
+                      </motion.div>
+                    ))}
                   </div>
                 )}
+
+                {/* Stack */}
+                <div>
+                  <p
+                    className="text-xs uppercase tracking-widest text-gray-300 mb-3"
+                    style={{ fontWeight: 500 }}
+                  >
+                    Stack
+                  </p>
+                  <motion.div
+                    key={project.slug + "-tech"}
+                    className="flex flex-wrap gap-x-5 gap-y-2.5"
+                  >
+                    {project.tech.map((t, i) => {
+                      const icon = TECH_ICONS[t];
+                      return (
+                        <motion.span
+                          key={t}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: 0.05 + i * 0.04 }}
+                          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors duration-150 cursor-default select-none group"
+                        >
+                          {icon && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={icon}
+                              alt=""
+                              aria-hidden="true"
+                              className="w-4 h-4 object-contain transition-transform duration-150 group-hover:scale-125"
+                            />
+                          )}
+                          {t}
+                        </motion.span>
+                      );
+                    })}
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           </div>
