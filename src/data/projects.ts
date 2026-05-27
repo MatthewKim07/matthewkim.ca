@@ -3,6 +3,7 @@ export interface Project {
   slug: string;
   category: string;
   image: string;
+  video?: string;
   tagline: string;
   description: string;
   tech: string[];
@@ -17,16 +18,16 @@ export const projects: Project[] = [
   {
     title: "Compilot",
     slug: "compilot",
-    category: "Web Development",
+    category: "AI Competitor Tracker",
     image: "/images/compilot.png",
-    tagline: "AI-powered competitive intelligence analyst",
+    tagline: "Watches your competitors so you don't have to",
     description:
-      "Compilot tracks your competitors across jobs, GitHub, patents, and news, then surfaces strategic reasons behind every signal rather than just raw data. Automated weekly trends and monthly strategy reports so you never miss a move.",
-    tech: ["Next.js", "TypeScript", "OpenAI", "Tailwind CSS"],
+      "Compilot pulls public signals from hiring boards, GitHub, news feeds, patents, and pricing pages, runs them through a multi-agent pipeline, and rolls them up into daily, weekly, and monthly strategy reports. Not just a raw feed — actual analysis.",
+    tech: ["Python", "FastAPI", "React", "Vite", "Celery", "Redis", "PostgreSQL", "DeepSeek", "Docker"],
     highlights: [
-      "Automated competitor signal tracking across multiple data sources",
-      "AI reasoning layer that surfaces strategy, not just raw data",
-      "Weekly trend digests and monthly strategy reports",
+      "Multi-agent backend on Celery + Redis, pulling from Greenhouse, Lever, HN, RSS, GitHub, and patent data",
+      "AI synthesis layer turns scattered signals into structured business intelligence reports",
+      "Async FastAPI backend with Kubernetes manifests and an OpenAI-compatible inference layer",
     ],
     links: {
       github: "",
@@ -36,16 +37,16 @@ export const projects: Project[] = [
   {
     title: "Chef It",
     slug: "chef-it",
-    category: "UI/UX Design",
+    category: "iOS App",
     image: "/images/chef-it.png",
-    tagline: "Recipe discovery, reimagined",
+    tagline: "Scan your fridge, find out what you can cook",
     description:
-      "Chef It is a recipe discovery app designed around what you actually have in your kitchen. Snap a photo, get personalized recipes, and follow step-by-step guidance without a single trip to the grocery store.",
-    tech: ["React Native", "Expo", "TypeScript", "OpenAI Vision"],
+      "A native iOS app for the classic problem: you have random stuff and no idea what to make. It scans your pantry using computer vision, matches ingredients to real recipes, and walks you through cooking. Social sharing, shopping lists, and full auth — all built during a hackathon.",
+    tech: ["Swift", "SwiftUI", "Node.js", "Express", "PostgreSQL", "OpenAI Vision", "Gemini", "Edamam"],
     highlights: [
-      "Ingredient detection via camera",
-      "Personalized recipe matching with dietary filters",
-      "Step-by-step cooking mode with voice guidance",
+      "VisionKit + OpenAI Vision + Gemini for ingredient detection and interpretation",
+      "Full iOS auth stack: email, Google Sign-In, and Sign in with Apple",
+      "Node/Express/Postgres backend with social features, shopping lists, and cooking mode",
     ],
     links: {
       github: "",
@@ -55,16 +56,16 @@ export const projects: Project[] = [
   {
     title: "You vs You",
     slug: "you-vs-you",
-    category: "Branding",
+    category: "Browser Game",
     image: "/images/you-vs-you.png",
-    tagline: "Personal performance tracking with no ego",
+    tagline: "A game that studies how you play and adjusts to beat you",
     description:
-      "You vs You is a fitness and habit tracker built on the idea that the only meaningful competition is with your past self. Clean design, honest metrics, and no social features.",
-    tech: ["React", "TypeScript", "Tailwind CSS", "Supabase"],
+      "A browser game where the challenge isn't fixed. It tracks your inputs and habits across runs, builds a model of your play style, then reshapes the levels and traps to target your patterns. The more consistent you are, the harder it gets.",
+    tech: ["TypeScript", "Vite", "HTML5 Canvas", "Supabase"],
     highlights: [
-      "Personal best tracking across workouts and habits",
-      "Streak system with thoughtful reset mechanics",
-      "Offline-first data model",
+      "Custom telemetry pipeline feeds a behavioral model that mutates hazard generation each run",
+      "Modular adaptive systems: aiTrapDirector, playerAnalyzer, adaptiveGenerator, and run tracker",
+      "Supabase-backed auth, coin/shop progression, and cross-device leaderboard",
     ],
     links: {
       github: "",
@@ -74,17 +75,17 @@ export const projects: Project[] = [
   {
     title: "Vibe Learn",
     slug: "vibe-learn",
-    category: "Mobile App",
+    category: "VS Code Extension",
     image:
-      "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop",
-    tagline: "Learn anything through short, curated content",
+      "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=1200&auto=format&fit=crop",
+    tagline: "Coding help that explains instead of just answering",
     description:
-      "Vibe Learn surfaces bite-sized learning content tuned to your interests and pace. Think of it as a feed for curious people: no doom-scrolling, just concepts worth knowing.",
-    tech: ["React Native", "Expo", "TypeScript", "OpenAI"],
+      "A VS Code extension that changes how AI coding help works. Instead of handing you the answer, it asks what you've already tried, explains the concept behind the issue, and adjusts directness based on how stuck you are. OpenAI and local Ollama both supported.",
+    tech: ["TypeScript", "VS Code API", "OpenAI", "Ollama", "Node.js"],
     highlights: [
-      "Interest-based content personalization",
-      "Spaced repetition for retention",
-      "Offline caching for commutes",
+      "Prompt rewriting layer rephrases questions into teaching-oriented queries before they hit the model",
+      "Configurable help levels from pure hints to direct code, with VS Code SecretStorage for keys",
+      "OpenAI and Ollama fully wired with fuzzy model resolution for local Ollama setups",
     ],
     links: {
       github: "",
@@ -94,16 +95,16 @@ export const projects: Project[] = [
   {
     title: "WaterlooWorks+",
     slug: "waterlooworks-plus",
-    category: "Data Visualization",
+    category: "Chrome Extension",
     image: "/images/waterloo-works-plus.png",
-    tagline: "Better insights into UWaterloo's co-op job portal",
+    tagline: "WaterlooWorks with a brain",
     description:
-      "WaterlooWorks+ adds a data layer on top of UWaterloo's co-op job portal, surfacing application stats, interview conversion rates, and employer trends that the default UI hides.",
-    tech: ["TypeScript", "Chrome Extension", "D3.js", "Node.js"],
+      "A Chrome extension that makes the WaterlooWorks co-op portal worth using. Upload your resume and it parses your skills, re-ranks job listings by actual fit, and surfaces analysis the default UI doesn't bother with. Everything runs in your browser, nothing goes anywhere.",
+    tech: ["JavaScript", "Chrome APIs", "Manifest V3"],
     highlights: [
-      "Real-time application status aggregation",
-      "Employer acceptance rate visualization",
-      "Job trend heatmaps by discipline and term",
+      "Local resume parsing (PDF, DOCX, TXT) matched against posting skills and requirements",
+      "Shadow DOM injected panel keeps the extension UI isolated from WaterlooWorks' aging page structure",
+      "Privacy-first: chrome.storage.local only, no backend, no data collection",
     ],
     links: {
       github: "",
@@ -113,76 +114,16 @@ export const projects: Project[] = [
   {
     title: "Clarus",
     slug: "clarus",
-    category: "AI Integration",
+    category: "Academic Copilot",
     image: "/images/clarus.png",
-    tagline: "Clarity for complex documents",
+    tagline: "The planning layer Brightspace never had",
     description:
-      "Clarus is an AI reading assistant that breaks down dense legal, financial, and academic documents into plain language. Upload any document and get a structured summary, key terms, and Q&A in seconds.",
-    tech: ["Next.js", "TypeScript", "Claude API", "Tailwind CSS"],
+      "Clarus connects to D2L/Brightspace through a Playwright-based connector, syncs your courses and deadlines, and wraps it into a dashboard that actually shows you what's going on. Built toward AI-assisted planning, reminders, and workload prioritization — things the school portal never bothered to add.",
+    tech: ["Next.js", "TypeScript", "Fastify", "Playwright", "PostgreSQL", "Prisma", "Docker"],
     highlights: [
-      "Multi-format document parsing (PDF, DOCX, TXT)",
-      "Structured summary with key terms highlighted",
-      "Context-aware Q&A over the document",
-    ],
-    links: {
-      github: "",
-      live: "",
-    },
-  },
-  {
-    title: "PaintMind",
-    slug: "paintmind",
-    category: "Systems Design",
-    image:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-    tagline: "Collaborative canvas for visual thinkers",
-    description:
-      "PaintMind is a real-time collaborative whiteboard built for visual thinkers. Draw, annotate, and brainstorm with your team without the clutter of traditional tools.",
-    tech: ["React", "TypeScript", "WebSockets", "Canvas API"],
-    highlights: [
-      "Real-time multi-user collaboration with CRDTs",
-      "Infinite canvas with smart zoom and pan",
-      "Export to PNG, SVG, or shareable link",
-    ],
-    links: {
-      github: "",
-      live: "",
-    },
-  },
-  {
-    title: "Pathfinding API",
-    slug: "pathfinding-api",
-    category: "Machine Learning",
-    image:
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=400&auto=format&fit=crop",
-    tagline: "Graph traversal as a service",
-    description:
-      "A REST API exposing multiple pathfinding algorithms, including A*, Dijkstra, BFS, and DFS, with configurable heuristics and weighted graph support. Built for robotics and game dev integration.",
-    tech: ["Python", "FastAPI", "NumPy", "Docker"],
-    highlights: [
-      "Multiple algorithm support with unified interface",
-      "Configurable heuristics for A* variants",
-      "Weighted and directed graph support",
-    ],
-    links: {
-      github: "",
-      live: "",
-    },
-  },
-  {
-    title: "QueueMe",
-    slug: "queueme",
-    category: "Robotics",
-    image:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=400&auto=format&fit=crop",
-    tagline: "Smart queue management for physical spaces",
-    description:
-      "QueueMe uses computer vision to estimate queue length and wait times in real-world spaces, then surfaces that data through a simple dashboard. Built as a robotics project with ROS2.",
-    tech: ["Python", "ROS2", "OpenCV", "FastAPI", "React"],
-    highlights: [
-      "Real-time queue length estimation via CV",
-      "Wait time prediction with rolling average model",
-      "Live dashboard with alert thresholds",
+      "Playwright connector handles D2L auth and syncs courses, content, and timeline data",
+      "Three-service architecture: Next.js frontend, Fastify API, and browser automation connector",
+      "Foundation for deadline tracking, risk prediction, and AI-guided academic planning",
     ],
     links: {
       github: "",

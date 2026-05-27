@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import {
   motion,
   useMotionValue,
@@ -9,13 +8,21 @@ import {
   useSpring,
 } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { projects } from "@/data/projects";
+import { ProjectOverlay } from "@/components/ProjectOverlay";
 
-interface GalleryItem {
-  title: string;
-  slug: string;
-  category: string;
-  image: string;
-}
+const GALLERY_SLUGS = [
+  "compilot",
+  "chef-it",
+  "you-vs-you",
+  "vibe-learn",
+  "waterlooworks-plus",
+  "clarus",
+];
+
+const galleryProjects = GALLERY_SLUGS.map(
+  (slug) => projects.find((p) => p.slug === slug)!
+).filter(Boolean);
 
 const GenerativeArtCanvas = ({ isHovered }: { isHovered: boolean }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -25,7 +32,6 @@ const GenerativeArtCanvas = ({ isHovered }: { isHovered: boolean }) => {
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d")!;
-
     let animationFrameId: number;
 
     canvas.width = 400;
@@ -100,8 +106,15 @@ const GenerativeArtCanvas = ({ isHovered }: { isHovered: boolean }) => {
   );
 };
 
-const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
-  const slug = item.slug;
+const GalleryCard = ({
+  item,
+  index,
+  onSelect,
+}: {
+  item: (typeof galleryProjects)[number];
+  index: number;
+  onSelect: (slug: string) => void;
+}) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -151,7 +164,11 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
       data-no-trail
       className="group relative h-80 w-full rounded-xl overflow-hidden select-none"
     >
-      <Link href={`/projects/${slug}`} className="absolute inset-0 z-20" aria-label={`View ${item.title}`} />
+      <button
+        onClick={() => onSelect(item.slug)}
+        className="absolute inset-0 z-20 cursor-pointer"
+        aria-label={`View ${item.title}`}
+      />
       <div
         style={{ transform: "translateZ(50px)", transformStyle: "preserve-3d" }}
         className="absolute inset-0 flex flex-col justify-end p-6 rounded-xl overflow-hidden"
@@ -176,7 +193,8 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="text-xl font-bold text-white mb-1"
+            className="text-xl text-white mb-1"
+            style={{ fontFamily: "var(--font-milker)" }}
           >
             {item.title}
           </motion.h3>
@@ -190,6 +208,7 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
               delay: 0.05,
             }}
             className="text-sm text-slate-400"
+            style={{ fontFamily: "var(--font-sf)" }}
           >
             {item.category}
           </motion.p>
@@ -202,23 +221,34 @@ const GalleryCard = ({ item, index }: { item: GalleryItem; index: number }) => {
   );
 };
 
-const galleryItems: GalleryItem[] = [
-  { title: "Compilot", slug: "compilot", category: "AI Agent", image: "/images/compilot.png" },
-  { title: "Chef It", slug: "chef-it", category: "iOS App", image: "/images/chef-it.png" },
-  { title: "You vs You", slug: "you-vs-you", category: "AI-Powered Game", image: "/images/you-vs-you.png" },
-  { title: "Vibe Learn", slug: "vibe-learn", category: "VS Code Extension", image: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=400&auto=format&fit=crop" },
-  { title: "WaterlooWorks+", slug: "waterlooworks-plus", category: "Chrome Extension", image: "/images/waterloo-works-plus.png" },
-  { title: "Clarus", slug: "clarus", category: "Academic Dashboard", image: "/images/clarus.png" },
-];
-
 export default function GenerativeArtGallery() {
+  const [selectedSlug, setSelectedSlug] = React.useState<string | null>(null);
+  const selectedProject = selectedSlug
+    ? projects.find((p) => p.slug === selectedSlug) ?? null
+    : null;
+
   return (
-    <div className="relative w-full min-h-screen bg-white flex flex-col items-center justify-center p-8 md:p-16 overflow-hidden">
-      <div data-basketball-collider className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
-        {galleryItems.map((item, index) => (
-          <GalleryCard key={item.title} item={item} index={index} />
-        ))}
+    <>
+      <div className="relative w-full min-h-screen bg-white flex flex-col items-center justify-center p-8 md:p-16 overflow-hidden">
+        <div
+          data-basketball-collider
+          className="relative z-10 w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          {galleryProjects.map((item, index) => (
+            <GalleryCard
+              key={item.title}
+              item={item}
+              index={index}
+              onSelect={setSelectedSlug}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+
+      <ProjectOverlay
+        project={selectedProject}
+        onClose={() => setSelectedSlug(null)}
+      />
+    </>
   );
 }
