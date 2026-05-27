@@ -34,25 +34,53 @@ function ProjectCard({
       className="flex flex-col gap-3"
     >
       {/* Media */}
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group">
-        {project.video ? (
-          <video
-            src={project.video}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={project.image}
-            alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          />
-        )}
-      </div>
+      {project.links.live ? (
+        <a
+          href={project.links.live}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group block"
+          aria-label={`Open ${project.title}`}
+        >
+          {project.video ? (
+            <video
+              src={project.video}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          )}
+        </a>
+      ) : (
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group">
+          {project.video ? (
+            <video
+              src={project.video}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          )}
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex flex-col gap-1">

@@ -70,7 +70,7 @@ export const projects: Project[] = [
     ],
     links: {
       github: "",
-      live: "",
+      live: "https://you-vs-you-game.vercel.app/",
     },
   },
   {
