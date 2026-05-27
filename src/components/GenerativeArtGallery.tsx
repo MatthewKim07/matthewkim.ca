@@ -49,7 +49,7 @@ function ProjectCard({
               muted
               loop
               playsInline
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -69,7 +69,7 @@ function ProjectCard({
               muted
               loop
               playsInline
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
