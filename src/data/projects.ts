@@ -129,7 +129,7 @@ export const projects: Project[] = [
     ],
     links: {
       github: "",
-      live: "",
+      live: "https://clarus-eight.vercel.app/",
     },
   },
 ];
