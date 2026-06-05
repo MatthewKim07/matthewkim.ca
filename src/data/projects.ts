@@ -117,6 +117,7 @@ export const projects: Project[] = [
     slug: "clarus",
     category: "Academic Copilot",
     image: "/images/clarus.png",
+    video: "/videos/clarus-demo.mp4",
     tagline: "The planning layer Brightspace never had",
     description:
       "Clarus connects to D2L/Brightspace through a Playwright-based connector, syncs your courses and deadlines, and wraps it into a dashboard that actually shows you what's going on. Built toward AI-assisted planning, reminders, and workload prioritization — things the school portal never bothered to add.",
