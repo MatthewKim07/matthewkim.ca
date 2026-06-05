@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import NextImage from "next/image";
 
@@ -12,66 +12,100 @@ const BUBBY_PHOTOS = [
   "/images/gallery/Bubby/bubby-gallery5.png",
 ];
 
+const ANGLES = [-80, -40, 0, 40, 80];
+const RADIUS = 150;
+const PHOTO_SIZE = 68;
+const GIF_SIZE = 128;
+const CX = GIF_SIZE / 2;
+const CY = GIF_SIZE / 2;
+
+// Arc bounding box in container coords (with 16px buffer)
+const BOUNDS = {
+  left: CX - RADIUS * Math.sin((80 * Math.PI) / 180) - PHOTO_SIZE / 2 - 16,
+  top: CY - RADIUS - PHOTO_SIZE / 2 - 16,
+  right: CX + RADIUS * Math.sin((80 * Math.PI) / 180) + PHOTO_SIZE / 2 + 16,
+  bottom: GIF_SIZE + 16,
+};
+
 export function BubbyGif() {
   const [hovered, setHovered] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hovered) return;
+
+    const handleMove = (e: PointerEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const inBounds =
+        e.clientX >= rect.left + BOUNDS.left &&
+        e.clientX <= rect.left + BOUNDS.right &&
+        e.clientY >= rect.top + BOUNDS.top &&
+        e.clientY <= rect.top + BOUNDS.bottom;
+      if (!inBounds) setHovered(false);
+    };
+
+    document.addEventListener("pointermove", handleMove);
+    return () => document.removeEventListener("pointermove", handleMove);
+  }, [hovered]);
 
   return (
     <div
-      className="relative flex justify-center"
+      ref={containerRef}
+      className="relative w-32 h-32"
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       data-no-trail
     >
       <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none"
-          >
-            {/* Bubble */}
-            <div className="flex gap-2 bg-white/10 backdrop-blur-md border border-white/[0.08] rounded-2xl p-2.5">
-              {BUBBY_PHOTOS.map((src, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.18, delay: i * 0.04, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 relative"
-                >
-                  <NextImage
-                    src={src}
-                    alt={`Bubby ${i + 1}`}
-                    fill
-                    sizes="72px"
-                    quality={75}
-                    className="object-cover"
-                  />
-                </motion.div>
-              ))}
-            </div>
-            {/* Tail */}
-            <div
-              className="absolute left-1/2 -translate-x-1/2 -bottom-[9px]"
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: "9px solid transparent",
-                borderRight: "9px solid transparent",
-                borderTop: "9px solid rgba(255,255,255,0.1)",
-              }}
-            />
-          </motion.div>
-        )}
+        {hovered &&
+          BUBBY_PHOTOS.map((src, i) => {
+            const rad = (ANGLES[i] * Math.PI) / 180;
+            const x = RADIUS * Math.sin(rad);
+            const y = -RADIUS * Math.cos(rad);
+            const left = CX + x - PHOTO_SIZE / 2;
+            const top = CY + y - PHOTO_SIZE / 2;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                transition={{
+                  duration: 0.22,
+                  delay: i * 0.04,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ scale: 1.6, zIndex: 20 }}
+                className="absolute rounded-xl overflow-hidden cursor-pointer"
+                style={{
+                  width: PHOTO_SIZE,
+                  height: PHOTO_SIZE,
+                  left,
+                  top,
+                  rotate: `${ANGLES[i] * 0.25}deg`,
+                  zIndex: 10,
+                }}
+              >
+                <NextImage
+                  src={src}
+                  alt={`Bubby ${i + 1}`}
+                  fill
+                  sizes={`${PHOTO_SIZE}px`}
+                  quality={75}
+                  className="object-cover"
+                />
+              </motion.div>
+            );
+          })}
       </AnimatePresence>
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/bubby.gif"
         alt="Bubby"
-        className="w-32 h-32 rounded-full object-cover"
+        className="relative w-32 h-32 rounded-full object-cover"
+        style={{ zIndex: 5 }}
       />
     </div>
   );
