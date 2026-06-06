@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { sounds } from "@/lib/sounds";
 import { motion, AnimatePresence } from "framer-motion";
 import NextImage from "next/image";
 
@@ -30,6 +31,7 @@ const BOUNDS = {
 export function BubbyGif() {
   const [hovered, setHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const barkPlayed = useRef(false);
 
   useEffect(() => {
     if (!hovered) return;
@@ -43,7 +45,7 @@ export function BubbyGif() {
         e.clientX <= rect.left + BOUNDS.right &&
         e.clientY >= rect.top + BOUNDS.top &&
         e.clientY <= rect.top + BOUNDS.bottom;
-      if (!inBounds) setHovered(false);
+      if (!inBounds) { barkPlayed.current = false; setHovered(false); }
     };
 
     document.addEventListener("pointermove", handleMove);
@@ -54,7 +56,13 @@ export function BubbyGif() {
     <div
       ref={containerRef}
       className="relative w-32 h-32"
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        if (!barkPlayed.current) {
+          barkPlayed.current = true;
+          sounds.bubbyBark();
+        }
+        setHovered(true);
+      }}
       data-no-trail
     >
       <AnimatePresence>

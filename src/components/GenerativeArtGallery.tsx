@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Clapperboard } from "lucide-react";
 import { projects } from "@/data/projects";
+import { sounds } from "@/lib/sounds";
 
 const GALLERY_SLUGS = [
   "compilot",
@@ -157,6 +158,7 @@ function ProjectCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative inline-block group/title"
+                  onClick={() => sounds.crunch()}
                 >
                   <span
                     className="absolute inset-y-0 -inset-x-1 rounded-sm origin-left scale-x-0 group-hover/title:scale-x-100 transition-transform duration-500 ease-out"

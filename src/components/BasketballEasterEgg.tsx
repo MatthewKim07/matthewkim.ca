@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { sounds } from "@/lib/sounds";
 
 // Constants
 const BALL_RADIUS      = 20;    // px, physics radius; display diameter = 2x
@@ -22,12 +23,14 @@ const MAX_BALL_SPEED        = 18;   // px/frame, post-collision speed cap
 
 interface Ball {
   id: string;
-  x: number; y: number;       // center position
+  x: number; y: number;
   vx: number; vy: number;
   rotation: number;
   opacity: number;
   scale: number;
   startTime: number;
+  bounceCount: number;
+  lastBounceTime: number;
 }
 
 let _id = 0;
@@ -109,6 +112,7 @@ export function BasketballWord() {
       // Physics — 3 substeps for stable narrow-gap collision resolution
       const NUM_SUBSTEPS = 3;
       const dampPerStep = Math.pow(LINEAR_DAMPING, 1 / NUM_SUBSTEPS);
+      const preVy = b.vy;
       for (let step = 0; step < NUM_SUBSTEPS; step++) {
         b.vy += GRAVITY / NUM_SUBSTEPS;
         b.vx *= dampPerStep;
@@ -136,6 +140,16 @@ export function BasketballWord() {
           }
         }
       }
+      // Bounce sound: vy flipped from downward to upward with enough speed
+      if (preVy > 1.5 && b.vy < -1.5) {
+        const nowMs = performance.now();
+        if (nowMs - b.lastBounceTime > 120) {
+          b.lastBounceTime = nowMs;
+          b.bounceCount += 1;
+          sounds.basketballBounce(b.bounceCount);
+        }
+      }
+
       b.rotation += b.vx * SPIN_MULT;
 
       // Fade
@@ -214,7 +228,10 @@ export function BasketballWord() {
         opacity: 1,
         scale: 0,
         startTime: performance.now(),
+        bounceCount: 0,
+        lastBounceTime: 0,
       };
+      sounds.basketballLaunch();
       ballsRef.current.set(id, ball);
       if (rafRef.current === null) {
         rafRef.current = requestAnimationFrame(tickRef.current);
