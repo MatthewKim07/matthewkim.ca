@@ -2,6 +2,24 @@ const rawCache: Record<string, ArrayBuffer> = {};
 const bufferCache: Record<string, AudioBuffer> = {};
 let audioCtx: AudioContext | null = null;
 
+let soundEnabled = false;
+let vinylLogicallyPlaying = false;
+
+export function setSoundEnabled(enabled: boolean) {
+  soundEnabled = enabled;
+  if (vinylLogicallyPlaying) {
+    if (enabled) {
+      vlAudio?.play().catch(() => {});
+    } else {
+      vlAudio?.pause();
+    }
+  }
+}
+
+export function isSoundEnabled() {
+  return soundEnabled;
+}
+
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
   if (audioCtx.state === "suspended") audioCtx.resume();
@@ -52,7 +70,7 @@ if (typeof window !== "undefined") {
 }
 
 async function play(src: string, volume = 0.5, offset = 0) {
-  if (typeof window === "undefined") return;
+  if (!soundEnabled || typeof window === "undefined") return;
   try {
     const c = getCtx();
     if (!bufferCache[src]) {
@@ -90,6 +108,25 @@ const BARK_FILES = [
   "/sfx/bubby-bark-three.mp3",
 ];
 
+let vlAudio: HTMLAudioElement | null = null;
+
+export const vinylLoop = {
+  start() {
+    vinylLogicallyPlaying = true;
+    if (!soundEnabled || typeof window === "undefined") return;
+    if (!vlAudio) {
+      vlAudio = new Audio("/sfx/vinyl-loop.mp3");
+      vlAudio.loop = true;
+      vlAudio.volume = 0.35;
+    }
+    vlAudio.play().catch(() => {});
+  },
+  stop() {
+    vinylLogicallyPlaying = false;
+    vlAudio?.pause();
+  },
+};
+
 if (typeof window !== "undefined") {
   prefetch("/sfx/bubble-pop.mp3");
   prefetch("/sfx/leaf-crunch.mp3");
@@ -122,10 +159,10 @@ export const sounds = {
     const volume = 0.5 * Math.pow(0.8, extraBounces);
     play(BOUNCE_FILES[idx], volume, 0);
   },
-  demoClick:     () => play("/sfx/you-vs-you-demo-click.mp3", 0.5, 0),
-  planeFlyby:    () => play("/sfx/plane-flyby.mp3",          0.5, 0),
-  linkedinClick:   () => play("/sfx/linkedin-button.mp3",           0.5, 0),
-  satisfyingPress: () => play("/sfx/satisfying-button-press.mp3", 0.5, 0),
-  mouseClick:      () => play("/sfx/mouse-click.mp3",   0.5, 0),
-  messageSound:    () => play("/sfx/message-sound.mp3", 0.375, 0),
+  demoClick:       () => play("/sfx/you-vs-you-demo-click.mp3",   0.5,   0),
+  planeFlyby:      () => play("/sfx/plane-flyby.mp3",             0.5,   0),
+  linkedinClick:   () => play("/sfx/linkedin-button.mp3",         0.5,   0),
+  satisfyingPress: () => play("/sfx/satisfying-button-press.mp3", 0.5,   0),
+  mouseClick:      () => play("/sfx/mouse-click.mp3",             0.5,   0),
+  messageSound:    () => play("/sfx/message-sound.mp3",           0.375, 0),
 };

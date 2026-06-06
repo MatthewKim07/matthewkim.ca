@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAnimationFrame, useMotionValue, animate } from "framer-motion";
 import { CursorTrail } from "@/components/CursorTrail";
-import { sounds } from "@/lib/sounds";
+import { sounds, vinylLoop } from "@/lib/sounds";
 
 const PIVOT_X = 23;
 const PIVOT_Y = 5;
@@ -58,7 +58,7 @@ export function TrailControls() {
     <>
       <button
         data-no-trail
-        onClick={() => setActive((v) => { const next = !v; next ? sounds.vinylStart() : sounds.vinylStop(); return next; })}
+        onClick={() => setActive((v) => { const next = !v; if (next) { sounds.vinylStart(); vinylLoop.start(); } else { sounds.vinylStop(); vinylLoop.stop(); } return next; })}
         aria-label={active ? "Turn off music trail" : "Turn on music trail"}
         className="transition-opacity hover:opacity-70 active:opacity-50"
       >
