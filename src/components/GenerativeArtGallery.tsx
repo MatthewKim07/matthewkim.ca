@@ -115,7 +115,7 @@ function ProjectCard({
         {/* Media */}
         <div
           className={`relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group ${project.video ? "cursor-pointer" : ""}`}
-          onClick={project.video ? () => { if (project.slug === "you-vs-you") sounds.demoClick(); setModalOpen(true); } : undefined}
+          onClick={project.video ? () => { sounds[project.slug === "you-vs-you" ? "demoClick" : "demoOpen"](); setModalOpen(true); } : undefined}
         >
           {project.video ? (
             <video
