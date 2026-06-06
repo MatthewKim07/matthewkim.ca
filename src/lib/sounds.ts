@@ -28,6 +28,9 @@ async function decodeAll() {
     "/sfx/you-vs-you-demo-click.mp3",
     "/sfx/plane-flyby.mp3",
     "/sfx/linkedin-button.mp3",
+    "/sfx/satisfying-button-press.mp3",
+    "/sfx/mouse-click.mp3",
+    "/sfx/message-sound.mp3",
     ...BOUNCE_FILES,
   ];
   await Promise.all(
@@ -96,6 +99,9 @@ if (typeof window !== "undefined") {
   prefetch("/sfx/you-vs-you-demo-click.mp3");
   prefetch("/sfx/plane-flyby.mp3");
   prefetch("/sfx/linkedin-button.mp3");
+  prefetch("/sfx/satisfying-button-press.mp3");
+  prefetch("/sfx/mouse-click.mp3");
+  prefetch("/sfx/message-sound.mp3");
   BOUNCE_FILES.forEach(prefetch);
   BARK_FILES.forEach(prefetch);
 }
@@ -118,5 +124,8 @@ export const sounds = {
   },
   demoClick:     () => play("/sfx/you-vs-you-demo-click.mp3", 0.5, 0),
   planeFlyby:    () => play("/sfx/plane-flyby.mp3",          0.5, 0),
-  linkedinClick: () => play("/sfx/linkedin-button.mp3",      0.5, 0),
+  linkedinClick:   () => play("/sfx/linkedin-button.mp3",           0.5, 0),
+  satisfyingPress: () => play("/sfx/satisfying-button-press.mp3", 0.5, 0),
+  mouseClick:      () => play("/sfx/mouse-click.mp3",   0.5, 0),
+  messageSound:    () => play("/sfx/message-sound.mp3", 0.375, 0),
 };
