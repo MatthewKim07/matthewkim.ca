@@ -25,6 +25,9 @@ async function decodeAll() {
     "/sfx/vinyl-start.mp3",
     "/sfx/vinyl-stop.mp3",
     "/sfx/basketball-launch.mp3",
+    "/sfx/you-vs-you-demo-click.mp3",
+    "/sfx/plane-flyby.mp3",
+    "/sfx/linkedin-button.mp3",
     ...BOUNCE_FILES,
   ];
   await Promise.all(
@@ -90,6 +93,9 @@ if (typeof window !== "undefined") {
   prefetch("/sfx/vinyl-start.mp3");
   prefetch("/sfx/vinyl-stop.mp3");
   prefetch("/sfx/basketball-launch.mp3");
+  prefetch("/sfx/you-vs-you-demo-click.mp3");
+  prefetch("/sfx/plane-flyby.mp3");
+  prefetch("/sfx/linkedin-button.mp3");
   BOUNCE_FILES.forEach(prefetch);
   BARK_FILES.forEach(prefetch);
 }
@@ -110,4 +116,7 @@ export const sounds = {
     const volume = 0.5 * Math.pow(0.8, extraBounces);
     play(BOUNCE_FILES[idx], volume, 0);
   },
+  demoClick:     () => play("/sfx/you-vs-you-demo-click.mp3", 0.5, 0),
+  planeFlyby:    () => play("/sfx/plane-flyby.mp3",          0.5, 0),
+  linkedinClick: () => play("/sfx/linkedin-button.mp3",      0.5, 0),
 };
