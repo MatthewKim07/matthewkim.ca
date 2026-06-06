@@ -7,6 +7,7 @@ import React from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { sounds } from "@/lib/sounds";
 
 type LinkPreviewProps = {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ type LinkPreviewProps = {
   height?: number;
   quality?: number;
   annotation?: string;
+  soundOnClick?: keyof typeof sounds;
 } & (
   | { isStatic: true; imageSrc: string; videoSrc?: never }
   | { isStatic: true; videoSrc: string; imageSrc?: never }
@@ -33,6 +35,7 @@ export const LinkPreview = ({
   imageSrc = "",
   videoSrc,
   annotation,
+  soundOnClick,
 }: LinkPreviewProps & { videoSrc?: string; annotation?: string }) => {
   let src: string;
   if (!isStatic) {
@@ -93,6 +96,7 @@ export const LinkPreview = ({
             target="_blank"
             rel="noopener noreferrer"
             onMouseMove={handleMouseMove}
+            onClick={soundOnClick ? () => sounds[soundOnClick]() : undefined}
             className={cn("cursor-pointer", className)}
           >
             {children}

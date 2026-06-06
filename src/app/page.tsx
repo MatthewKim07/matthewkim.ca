@@ -62,7 +62,7 @@ export default function Home() {
       </div>
       <div className="max-w-xl mx-auto px-8 pt-2 pb-12 text-center select-none">
         <div data-no-trail data-basketball-collider className="text-base text-gray-400 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
-          <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" className="group">
+          <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" soundOnClick="mouseClick" className="group">
             <span className="group-hover:text-gray-900 transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
           </LinkPreview>
         </div>
@@ -71,7 +71,7 @@ export default function Home() {
           <ul className="text-base text-gray-500 space-y-2 leading-relaxed">
             <li className="flex items-center gap-2.5">
               <Handshake size={15} className="text-gray-500 shrink-0" />
-              <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" className="group" annotation="Something I built" isStatic imageSrc="/images/swd-uwaterloo-preview-image.png"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
+              <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" soundOnClick="mouseClick" className="group" annotation="Something I built" isStatic imageSrc="/images/swd-uwaterloo-preview-image.png"><span className="group-hover:text-gray-900 transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Lightbulb size={15} className="text-gray-500 shrink-0" />
@@ -102,7 +102,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
           <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>
-          <LinkPreview url="https://lib.uwaterloo.ca/web/" width={200} height={130} isStatic imageSrc="/images/uwaterloo-image-link-preview.png">
+          <LinkPreview url="https://lib.uwaterloo.ca/web/" soundOnClick="satisfyingPress" width={200} height={130} isStatic imageSrc="/images/uwaterloo-image-link-preview.png">
             <Image data-basketball-collider src="/images/uwaterloo-logo.png" alt="University of Waterloo" width={160} height={160} className="object-contain" />
           </LinkPreview>
           <span data-basketball-collider className="text-sm text-gray-500" style={{ fontFamily: "var(--font-sf)" }}>Software Developer</span>
@@ -110,7 +110,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Western University</span></h3>
           <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">FAST</span></h4>
-          <LinkPreview url="https://www.appropedia.org/FAST" width={200} height={130} isStatic imageSrc="/images/westernu-image-link-preview.png">
+          <LinkPreview url="https://www.appropedia.org/FAST" soundOnClick="satisfyingPress" width={200} height={130} isStatic imageSrc="/images/westernu-image-link-preview.png">
             <Image data-basketball-collider src="/images/westernu-logo.png" alt="Western University" width={160} height={160} className="object-contain" />
           </LinkPreview>
           <span data-basketball-collider className="text-sm text-gray-500 text-center" style={{ fontFamily: "var(--font-sf)" }}>Engineering Research<br />Assistant</span>
