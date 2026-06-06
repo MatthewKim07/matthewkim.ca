@@ -49,7 +49,7 @@ export const projects: Project[] = [
       "Node/Express/Postgres backend with social features, shopping lists, and cooking mode",
     ],
     links: {
-      github: "",
+      github: "https://github.com/MatthewKim07/chef-it",
       live: "",
     },
   },
