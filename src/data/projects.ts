@@ -98,6 +98,7 @@ export const projects: Project[] = [
     slug: "waterlooworks-plus",
     category: "Chrome Extension",
     image: "/images/waterloo-works-plus.png",
+    video: "/videos/waterloo-works-plus-demo.mp4",
     tagline: "WaterlooWorks with a brain",
     description:
       "A Chrome extension that makes the WaterlooWorks co-op portal worth using. Upload your resume and it parses your skills, re-ranks job listings by actual fit, and surfaces analysis the default UI doesn't bother with. Everything runs in your browser, nothing goes anywhere.",
@@ -108,7 +109,7 @@ export const projects: Project[] = [
       "Privacy-first: chrome.storage.local only, no backend, no data collection",
     ],
     links: {
-      github: "",
+      github: "https://github.com/MatthewKim07/waterloo-works-plus",
       live: "",
     },
   },

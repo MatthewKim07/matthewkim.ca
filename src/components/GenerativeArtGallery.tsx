@@ -34,9 +34,9 @@ function ProjectCard({
       className="flex flex-col gap-3"
     >
       {/* Media */}
-      {project.links.live ? (
+      {(project.links.live || project.links.github) ? (
         <a
-          href={project.links.live}
+          href={project.links.live || project.links.github}
           target="_blank"
           rel="noopener noreferrer"
           className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group block"
