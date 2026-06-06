@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { sounds } from "@/lib/sounds";
 
 const PHRASES = [
   "i build useful software",
@@ -118,6 +119,7 @@ export function CyclingPhrase() {
   }, [idx, scheduleNext]);
 
   const handleClick = () => {
+    sounds.messageSound();
     setIdx((prev) => getNextRandom(prev, PHRASES.length));
     setAnimKey((k) => k + 1);
   };
