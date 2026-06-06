@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTravelPlayer } from "@/context/TravelContext";
+import { sounds } from "@/lib/sounds";
 
 export function TravelWord() {
   const { enter, state } = useTravelPlayer();
@@ -28,7 +29,7 @@ export function TravelWord() {
   return (
     <button
       ref={btnRef}
-      onClick={enter}
+      onClick={() => { sounds.planeFlyby(); enter(); }}
       onKeyDown={handleKeyDown}
       disabled={disabled}
       aria-label="travel (click to open travel gallery)"
