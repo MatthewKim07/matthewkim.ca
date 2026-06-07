@@ -203,7 +203,7 @@ function ProjectCard({
 
 export default function GenerativeArtGallery() {
   return (
-    <div className="w-full bg-white px-8 md:px-16 pb-16">
+    <div className="w-full bg-white px-8 md:px-16 pb-16 select-none">
       <div
         data-basketball-collider
         className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10"

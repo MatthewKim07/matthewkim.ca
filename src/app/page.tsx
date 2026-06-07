@@ -34,7 +34,7 @@ const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
 
 export default function Home() {
   return (
-    <div className={`${milker.variable} ${sf.variable} ${caveat.variable} bg-white overflow-x-hidden relative`}>
+    <div className={`${milker.variable} ${sf.variable} ${caveat.variable} bg-white overflow-x-hidden relative select-none`}>
       <nav data-no-trail className="absolute top-0 right-0 p-5 flex flex-col items-end gap-2 z-40">
         <div className="flex items-center gap-2">
           <EmailLink email="matthewminchulkim@gmail.com" className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-900 text-white hover:bg-red-600 transition-colors">
@@ -102,7 +102,7 @@ export default function Home() {
       >
         <span data-basketball-collider className="inline-block">my experience</span>
       </h2>
-      <div className="grid grid-cols-2 max-w-lg mx-auto pb-12 px-8 pt-8">
+      <div className="grid grid-cols-2 max-w-lg mx-auto pb-12 px-8">
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
           <h4 className="text-sm font-medium text-gray-400 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>

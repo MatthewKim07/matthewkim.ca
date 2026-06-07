@@ -135,7 +135,7 @@ export function CyclingPhrase() {
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="absolute left-0 top-0 group text-left cursor-pointer outline-none"
+        className="absolute left-0 top-0 group text-left cursor-pointer outline-none select-none"
         aria-label="Click for another phrase"
       >
         <AnimatePresence mode="wait">
