@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { useMusicPlayer } from "@/context/MusicContext";
+import { sounds } from "@/lib/sounds";
 
 function EqualizerBars({ active }: { active: boolean }) {
   return (
@@ -27,19 +28,24 @@ function EqualizerBars({ active }: { active: boolean }) {
 export function MusicWord() {
   const { isPanelOpen, isPlaying, togglePanel } = useMusicPlayer();
 
+  const handleClick = useCallback(() => {
+    sounds.musicClick();
+    togglePanel();
+  }, [togglePanel]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        togglePanel();
+        handleClick();
       }
     },
-    [togglePanel]
+    [handleClick]
   );
 
   return (
     <button
-      onClick={togglePanel}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-label={isPanelOpen ? "close music panel" : "music (click to open playlist)"}
       aria-expanded={isPanelOpen}
