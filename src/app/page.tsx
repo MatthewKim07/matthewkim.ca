@@ -83,7 +83,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Trophy size={15} className="text-gray-500 shrink-0" />
-              <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
+              <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/" soundOnClick="pantryPalClick"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Star size={15} className="text-gray-500 shrink-0" />
