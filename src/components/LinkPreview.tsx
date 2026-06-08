@@ -17,7 +17,7 @@ type LinkPreviewProps = {
   height?: number;
   quality?: number;
   annotation?: string;
-  soundOnClick?: keyof typeof sounds;
+  soundOnClick?: Exclude<keyof typeof sounds, "basketballBounce">;
 } & (
   | { isStatic: true; imageSrc: string; videoSrc?: never }
   | { isStatic: true; videoSrc: string; imageSrc?: never }

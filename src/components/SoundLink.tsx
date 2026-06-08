@@ -2,7 +2,7 @@
 
 import { sounds } from "@/lib/sounds";
 
-type SoundType = keyof typeof sounds;
+type SoundType = Exclude<keyof typeof sounds, "basketballBounce">;
 
 interface SoundLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   sound: SoundType;
