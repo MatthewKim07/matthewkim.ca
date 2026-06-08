@@ -20,10 +20,10 @@ const galleryProjects = GALLERY_SLUGS
   .filter(Boolean);
 
 const HIGHLIGHT_COLORS: Record<string, string> = {
-  "compilot":          "rgba(250, 204, 21, 0.55)",
+  "compilot":          "rgba(34, 211, 238, 0.55)",
   "chef-it":           "rgba(253, 186, 116, 0.65)",
   "you-vs-you":        "rgba(250, 204, 21, 0.55)",
-  "vibe-learn":        "rgba(250, 204, 21, 0.55)",
+  "vibe-learn":        "rgba(217, 70, 239, 0.45)",
   "waterlooworks-plus":"rgba(96, 165, 250, 0.55)",
   "clarus":            "rgba(200, 200, 200, 0.6)",
 };

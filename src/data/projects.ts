@@ -30,7 +30,7 @@ export const projects: Project[] = [
       "Async FastAPI backend with Kubernetes manifests and an OpenAI-compatible inference layer",
     ],
     links: {
-      github: "",
+      github: "https://github.com/alihusseini07/compilot",
       live: "",
     },
   },
@@ -78,8 +78,7 @@ export const projects: Project[] = [
     title: "Vibe Learn",
     slug: "vibe-learn",
     category: "VS Code Extension",
-    image:
-      "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?q=80&w=1200&auto=format&fit=crop",
+    image: "/images/vibelearn.png",
     tagline: "Coding help that explains instead of just answering",
     description:
       "A VS Code extension that changes how AI coding help works. Instead of handing you the answer, it asks what you've already tried, explains the concept behind the issue, and adjusts directness based on how stuck you are. OpenAI and local Ollama both supported.",
@@ -90,7 +89,7 @@ export const projects: Project[] = [
       "OpenAI and Ollama fully wired with fuzzy model resolution for local Ollama setups",
     ],
     links: {
-      github: "",
+      github: "https://github.com/MatthewKim07/vibe-learn",
       live: "",
     },
   },
