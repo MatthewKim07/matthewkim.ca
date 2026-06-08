@@ -167,7 +167,7 @@ export const sounds = {
   },
   demoClick:       () => play("/sfx/you-vs-you-demo-click.mp3",   0.5,   0),
   demoOpen:        () => play("/sfx/demo-click.mp3",              0.5,   0),
-  musicClick:      () => play("/sfx/music-click.mp3",             0.5,   0),
+  musicClick:      () => play("/sfx/music-click.mp3",             0.3,   0),
   pantryPalClick:  () => play("/sfx/pantry-pal-click.mp3",        0.5,   0),
   planeFlyby:      () => play("/sfx/plane-flyby.mp3",             0.5,   0),
   linkedinClick:   () => play("/sfx/linkedin-button.mp3",         0.5,   0),
