@@ -1,10 +1,8 @@
 <div align="center">
 
-# matthewkim.ca
+# [matthewkim.ca](https://matthewkim.ca)
 
 A personal portfolio built to feel handcrafted — minimal on the surface, with small details and motion underneath.
-
-### → [matthewkim.ca](https://matthewkim.ca)
 
 <br />
 
