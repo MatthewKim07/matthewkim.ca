@@ -39,6 +39,7 @@ export const projects: Project[] = [
     slug: "chef-it",
     category: "iOS App",
     image: "/images/chef-it.png",
+    video: "/videos/chef-it-demo.mp4",
     tagline: "Scan your fridge, find out what you can cook",
     description:
       "A native iOS app for the classic problem: you have random stuff and no idea what to make. It scans your pantry using computer vision, matches ingredients to real recipes, and walks you through cooking. Social sharing, shopping lists, and full auth — all built during a hackathon.",
