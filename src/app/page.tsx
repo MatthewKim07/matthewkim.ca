@@ -129,7 +129,7 @@ export default function Home() {
       <GenerativeArtGallery />
       <TechStack />
       <footer className="bg-gray-900 mt-24 px-8 py-10 grid grid-cols-3 items-center" style={{ fontFamily: "var(--font-sf)" }}>
-        <span className="text-white text-sm font-medium">Matthew Kim</span>
+        <span className="text-white text-sm font-medium">© 2026 Matthew Kim</span>
         <div className="flex justify-center">
           <BubbyGif />
         </div>
