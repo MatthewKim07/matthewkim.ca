@@ -112,7 +112,7 @@ const ImageTrail = ({
   });
 
   return (
-    <div className="relative w-full h-full pointer-events-none">
+    <div className="relative w-full h-full pointer-events-none overflow-hidden">
       {trailItems.map((item) => (
         <TrailItemComponent
           key={item.id}
