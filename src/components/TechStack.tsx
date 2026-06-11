@@ -19,7 +19,7 @@ const LANGUAGES: TechItem[] = [
   { name: "Rust",       src: "/images/tech/rust-icon.png" },
   { name: "Swift",      src: "/images/tech/swift-icon.png" },
   { name: "SQL",        src: "/images/tech/sql-icon.png" },
-  { name: "HTML",       src: "/images/tech/html-icon.jpg" },
+  { name: "HTML",       src: "/images/tech/html-icon.png" },
   { name: "CSS",        src: "/images/tech/css-icon.svg" },
   { name: "Bash",       src: "/images/tech/bash-icon.png" },
   { name: "PHP",        src: "/images/tech/php-icon.png" },
