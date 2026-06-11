@@ -52,6 +52,8 @@ async function decodeAll() {
     "/sfx/demo-click.mp3",
     "/sfx/music-click.mp3",
     "/sfx/pantry-pal-click.mp3",
+    "/sfx/light-switch-on.mp3",
+    "/sfx/light-switch-off.mp3",
     ...BOUNCE_FILES,
   ];
   await Promise.all(
@@ -145,6 +147,8 @@ if (typeof window !== "undefined") {
   prefetch("/sfx/demo-click.mp3");
   prefetch("/sfx/music-click.mp3");
   prefetch("/sfx/pantry-pal-click.mp3");
+  prefetch("/sfx/light-switch-on.mp3");
+  prefetch("/sfx/light-switch-off.mp3");
   BOUNCE_FILES.forEach(prefetch);
   BARK_FILES.forEach(prefetch);
 }
@@ -174,4 +178,6 @@ export const sounds = {
   satisfyingPress: () => play("/sfx/satisfying-button-press.mp3", 0.5,   0),
   mouseClick:      () => play("/sfx/mouse-click.mp3",             0.5,   0),
   messageSound:    () => play("/sfx/message-sound.mp3",           0.375, 0),
+  lightSwitchOn:   () => play("/sfx/light-switch-on.mp3",         0.5,   0),
+  lightSwitchOff:  () => play("/sfx/light-switch-off.mp3",        0.5,   0),
 };

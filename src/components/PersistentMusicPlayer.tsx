@@ -10,7 +10,7 @@ const SPOTIFY_PLAYLIST_EMBED_URL =
 
 function EqualizerBars({ active }: { active: boolean }) {
   return (
-    <span className="inline-flex items-end gap-[2px] text-gray-400" aria-hidden>
+    <span className="inline-flex items-end gap-[2px] text-gray-400 dark:text-gray-500" aria-hidden>
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
@@ -83,14 +83,14 @@ export function PersistentMusicPlayer() {
         maxWidth: "calc(100vw - 3rem)",
         pointerEvents: isPanelOpen ? "auto" : "none",
       }}
-      className="fixed bottom-6 right-6 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
+      className="fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden"
       aria-hidden={!isPanelOpen}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <EqualizerBars active={isPlaying} />
           <span
-            className="text-sm text-gray-500"
+            className="text-sm text-gray-500 dark:text-gray-400"
             style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
           >
             currently listening
@@ -99,7 +99,7 @@ export function PersistentMusicPlayer() {
         <button
           onClick={closePanel}
           aria-label="close music panel"
-          className="text-gray-400 hover:text-gray-700 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded p-0.5"
+          className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-gray-400 rounded p-0.5"
         >
           <X size={15} />
         </button>

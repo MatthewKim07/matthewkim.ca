@@ -145,7 +145,7 @@ export function CyclingPhrase() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-            className="inline-block whitespace-nowrap text-lg text-gray-800 group-hover:text-gray-500 transition-colors"
+            className="inline-block whitespace-nowrap text-lg text-gray-800 dark:text-gray-200 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors"
           >
             {PHRASES[idx]}
             <span className="ml-1.5 opacity-0 group-hover:opacity-40 transition-opacity text-sm select-none">

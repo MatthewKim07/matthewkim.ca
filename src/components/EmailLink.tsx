@@ -36,7 +36,7 @@ export function EmailLink({ email, className, children }: EmailLinkProps) {
       </a>
       {copied && (
         <div
-          className="absolute top-11 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-gray-900 text-white text-xs whitespace-nowrap pointer-events-none"
+          className="absolute top-11 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-xs whitespace-nowrap pointer-events-none"
           style={{ fontFamily: "var(--font-sf)" }}
         >
           Copied!

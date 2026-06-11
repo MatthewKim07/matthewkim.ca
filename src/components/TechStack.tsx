@@ -103,7 +103,7 @@ function TechRow({ label, items, speed = 1, direction = "forward", startIndex = 
   return (
     <div data-no-trail className="flex flex-col gap-2">
       <span
-        className="text-xl text-gray-400 tracking-wide text-center"
+        className="text-xl text-gray-400 dark:text-gray-500 tracking-wide text-center"
         style={{ fontFamily: "var(--font-sf)", fontWeight: 600 }}
       >
         {label}
@@ -127,15 +127,15 @@ function TechRow({ label, items, speed = 1, direction = "forward", startIndex = 
                 <img
                   src={item.src}
                   alt={item.name}
-                  className="h-8 w-auto max-w-[48px] object-contain"
+                  className="h-8 w-auto max-w-[48px] object-contain dark:[filter:drop-shadow(0_0_3px_rgba(255,255,255,0.6))] dark:[will-change:filter]"
                   draggable={false}
                 />
               </div>
             ))}
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white dark:from-gray-900 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white dark:from-gray-900 to-transparent" />
       </div>
 
       {tooltip && (
@@ -154,7 +154,7 @@ export function TechStack() {
   return (
     <section className="max-w-3xl mx-auto px-8 pt-4 pb-16 mt-12 select-none">
       <p
-        className="text-2xl font-semibold text-gray-900 text-center mb-8"
+        className="text-2xl font-semibold text-gray-900 dark:text-white text-center mb-8"
         style={{ fontFamily: "var(--font-sf)" }}
       >
         tech i use

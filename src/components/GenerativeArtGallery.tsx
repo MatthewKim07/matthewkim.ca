@@ -114,7 +114,7 @@ function ProjectCard({
       >
         {/* Media */}
         <div
-          className={`relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 group ${project.video ? "cursor-pointer" : ""}`}
+          className={`relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 group ${project.video ? "cursor-pointer" : ""}`}
           onClick={project.video ? () => { sounds[project.slug === "you-vs-you" ? "demoClick" : "demoOpen"](); setModalOpen(true); } : undefined}
         >
           {project.video ? (
@@ -149,7 +149,7 @@ function ProjectCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-4">
             <h3
-              className="text-xl text-gray-900 leading-none"
+              className="text-xl text-gray-900 dark:text-white leading-none"
               style={{ fontFamily: "var(--font-milker)" }}
             >
               {primaryLink ? (
@@ -172,7 +172,7 @@ function ProjectCard({
             </h3>
 
             <span
-              className="text-xs text-gray-400 uppercase tracking-widest shrink-0"
+              className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest shrink-0"
               style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}
             >
               {project.category}
@@ -180,7 +180,7 @@ function ProjectCard({
           </div>
 
           <p
-            className="text-sm text-gray-500 leading-relaxed"
+            className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed"
             style={{ fontFamily: "var(--font-sf)" }}
           >
             {project.tagline}
@@ -203,7 +203,7 @@ function ProjectCard({
 
 export default function GenerativeArtGallery() {
   return (
-    <div className="w-full bg-white px-8 md:px-16 pb-16 select-none">
+    <div className="w-full bg-white dark:bg-gray-900 px-8 md:px-16 pb-16 select-none">
       <div
         data-basketball-collider
         className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10"
