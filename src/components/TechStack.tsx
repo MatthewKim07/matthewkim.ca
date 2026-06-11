@@ -3,6 +3,7 @@
 import useEmblaCarousel from "embla-carousel-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 interface TechItem {
   name: string;
@@ -124,9 +125,11 @@ function TechRow({ label, items, speed = 1, direction = "forward", startIndex = 
                 className="shrink-0 flex items-center justify-center"
                 style={{ width: "72px", paddingLeft: "12px", paddingRight: "12px" }}
               >
-                <img
+                <Image
                   src={item.src}
                   alt={item.name}
+                  width={48}
+                  height={32}
                   className="h-8 w-auto max-w-[48px] object-contain dark:[filter:drop-shadow(0_0_3px_rgba(255,255,255,0.6))] dark:[will-change:filter]"
                   draggable={false}
                 />
