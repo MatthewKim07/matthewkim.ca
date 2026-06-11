@@ -12,7 +12,6 @@ import { TRAVEL_PHOTOS, STACKED_BELOW, type TravelPhoto } from "@/data/travel";
 // Tunables
 const WIPE_SKEW_PX     = 120;  // diagonal softness of the reveal edge (px)
 const PLANE_LEAD_PX    = 60;   // how far the plane center leads the reveal edge (px)
-const CLOSE_DURATION_S = 0.5;
 
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 

@@ -102,8 +102,6 @@ export function CyclingPhrase() {
   const [idx, setIdx] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const idxRef = useRef(idx);
-  idxRef.current = idx;
 
   const scheduleNext = useCallback(() => {
     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
