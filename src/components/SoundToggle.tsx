@@ -5,7 +5,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { setSoundEnabled, sounds } from "@/lib/sounds";
 
 export function SoundToggle() {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
   function toggle() {
     const next = !enabled;

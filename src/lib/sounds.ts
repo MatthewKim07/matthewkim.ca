@@ -2,7 +2,7 @@ const rawCache: Record<string, ArrayBuffer> = {};
 const bufferCache: Record<string, AudioBuffer> = {};
 let audioCtx: AudioContext | null = null;
 
-let soundEnabled = false;
+let soundEnabled = true;
 let vinylLogicallyPlaying = false;
 
 export function setSoundEnabled(enabled: boolean) {
