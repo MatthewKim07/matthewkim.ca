@@ -9,6 +9,7 @@ import { LinkPreview } from "@/components/LinkPreview";
 import { RainbowText } from "@/components/RainbowText";
 import { CyclingPhrase } from "@/components/CyclingPhrase";
 import { BasketballWord } from "@/components/BasketballEasterEgg";
+import { SoftwareEngineeringWord } from "@/components/MatrixEasterEgg";
 import { MusicWord } from "@/components/MusicEasterEgg";
 import { TravelWord } from "@/components/travel/TravelWord";
 import { TechStack } from "@/components/TechStack";
@@ -79,7 +80,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Lightbulb size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
-              <span>interested in software engineering and robotics</span>
+              <span>interested in <SoftwareEngineeringWord /> and robotics</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Trophy size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
