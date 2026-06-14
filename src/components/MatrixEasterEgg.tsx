@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MatrixRain } from "@/components/MatrixRain";
+import { sounds } from "@/lib/sounds";
 
 const RAIN_DURATION_MS = 2500;
 
@@ -19,6 +20,7 @@ export function SoftwareEngineeringWord() {
   }, []);
 
   const trigger = useCallback(() => {
+    sounds.mouseClick();
     if (reducedRef.current) return;
     setStopping(false);
     setRaining(true);
