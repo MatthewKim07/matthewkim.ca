@@ -10,6 +10,7 @@ import { RainbowText } from "@/components/RainbowText";
 import { CyclingPhrase } from "@/components/CyclingPhrase";
 import { BasketballWord } from "@/components/BasketballEasterEgg";
 import { SoftwareEngineeringWord } from "@/components/MatrixEasterEgg";
+import { RoboticsWord } from "@/components/RoboticsEasterEgg";
 import { MusicWord } from "@/components/MusicEasterEgg";
 import { TravelWord } from "@/components/travel/TravelWord";
 import { TechStack } from "@/components/TechStack";
@@ -65,7 +66,7 @@ export default function Home() {
           className="text-center text-6xl md:text-8xl text-gray-900 dark:text-white cursor-default select-none"
         />
       </div>
-      <div className="max-w-xl mx-auto px-8 pt-2 pb-12 text-center select-none">
+      <div className="relative max-w-xl mx-auto px-8 pt-2 pb-12 text-center select-none">
         <div data-no-trail data-basketball-collider className="text-base text-gray-400 dark:text-gray-500 mb-6 inline-block" style={{ fontFamily: "var(--font-sf)", fontWeight: 500 }}>
           <LinkPreview url="https://uwaterloo.ca/future-students/programs/mechatronics-engineering" soundOnClick="mouseClick" className="group">
             <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Mechatronics Engineering </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span>
@@ -80,7 +81,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <Lightbulb size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
-              <span>interested in <SoftwareEngineeringWord /> and robotics</span>
+              <span>interested in <SoftwareEngineeringWord /> and <RoboticsWord /></span>
             </li>
             <li className="flex items-center gap-2.5">
               <Trophy size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
