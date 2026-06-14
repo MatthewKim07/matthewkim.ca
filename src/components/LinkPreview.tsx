@@ -127,6 +127,7 @@ export const LinkPreview = ({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={soundOnClick ? () => sounds[soundOnClick]() : undefined}
                   className="block p-1 bg-white border-2 border-transparent shadow rounded-xl hover:border-neutral-200"
                   style={{ fontSize: 0 }}
                 >
