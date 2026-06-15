@@ -1,7 +1,8 @@
 import Image from "next/image";
 import localFont from "next/font/local";
 import { Caveat } from "next/font/google";
-import { Handshake, Lightbulb, Trophy, Star, Briefcase, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { AnimatedIconItem } from "@/components/AnimatedIconItem";
 import GenerativeArtGallery from "@/components/GenerativeArtGallery";
 import { TrailControls } from "@/components/TrailControls";
 import AnimatedTitleWrapper from "@/components/AnimatedTitleWrapper";
@@ -75,26 +76,21 @@ export default function Home() {
         <div data-no-trail data-basketball-collider className="text-gray-700 dark:text-gray-300 space-y-3.5 text-left inline-block" style={{ fontFamily: "var(--font-sf)" }}>
           <CyclingPhrase />
           <ul className="text-base text-gray-500 dark:text-gray-400 space-y-2 leading-relaxed">
-            <li className="flex items-center gap-2.5">
-              <Handshake size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            <AnimatedIconItem icon="handshake">
               <span>prev <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" soundOnClick="mouseClick" className="group" annotation="Something I built" isStatic imageSrc="/images/swd-uwaterloo-preview-image.png"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Lightbulb size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            </AnimatedIconItem>
+            <AnimatedIconItem icon="lightbulb">
               <span>interested in <SoftwareEngineeringWord /> and <RoboticsWord /></span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Trophy size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            </AnimatedIconItem>
+            <AnimatedIconItem icon="trophy">
               <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/" soundOnClick="pantryPalClick"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Star size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            </AnimatedIconItem>
+            <AnimatedIconItem icon="star">
               <span><BasketballWord />, <MusicWord />, <TravelWord />, and always building</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Briefcase size={15} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            </AnimatedIconItem>
+            <AnimatedIconItem icon="briefcase">
               <span>seeking fall 2026 internship opportunities</span>
-            </li>
+            </AnimatedIconItem>
           </ul>
         </div>
       </div>
