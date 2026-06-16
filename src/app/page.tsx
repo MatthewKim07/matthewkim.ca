@@ -127,14 +127,11 @@ export default function Home() {
       </h2>
       <GenerativeArtGallery />
       <TechStack />
-      <footer className="bg-gray-900 dark:bg-white mt-24 px-8 py-10 flex flex-col gap-12" style={{ fontFamily: "var(--font-sf)" }}>
+      <footer className="relative bg-gray-900 dark:bg-white mt-24 px-8 py-10 flex flex-col items-center gap-8" style={{ fontFamily: "var(--font-sf)" }}>
         <QuoteOfTheDay variant="footer" />
-        <div className="grid grid-cols-3 items-center">
-        <span className="text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
-        <div className="flex justify-center">
-          <BubbyGif />
-        </div>
-        <div className="flex items-center gap-3 justify-end">
+        <BubbyGif />
+        <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
           <EmailLink email="matthewminchulkim@gmail.com" className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-red-600 dark:bg-gray-900/10 dark:text-gray-900 dark:hover:bg-red-600 dark:hover:text-white transition-colors">
             <Mail size={15} strokeWidth={1.5} />
           </EmailLink>
@@ -148,7 +145,6 @@ export default function Home() {
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577v-2.165c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23a11.5 11.5 0 0 1 3.003-.404c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
             </svg>
           </SoundLink>
-        </div>
         </div>
       </footer>
     </div>
