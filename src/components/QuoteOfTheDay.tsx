@@ -85,6 +85,12 @@ export function QuoteOfTheDay({
                 className={`w-[2px] shrink-0 self-stretch rounded-full origin-center transition-all duration-300 group-hover:scale-y-110 ${c.bar}`}
               />
             </blockquote>
+            <figcaption
+              className={`mt-3 text-center text-base md:text-lg ${c.mark}`}
+              style={{ fontFamily: "var(--font-caveat)" }}
+            >
+              &mdash; {entry.author}
+            </figcaption>
           </motion.figure>
         )}
       </div>
