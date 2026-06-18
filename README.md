@@ -21,13 +21,15 @@ A personal portfolio built to feel handcrafted — minimal on the surface, with 
 | | |
 |---|---|
 | 🤖 | Mechatronics @ Waterloo, building software, robotics, and AI tooling |
-| 🖼️ | A generative art gallery for project showcases, each with its own demo |
-| 🎵 | A playlist easter egg and a tiny sound design system, off by default |
+| 🖼️ | A generative art gallery showcasing projects, several with video demos |
+| ✨ | Intro icons that animate uniquely on hover, each tuned to what it means |
+| 📜 | A public-domain quote in the footer that changes every day |
+| 🎵 | A playlist easter egg and a tiny sound design system, with a mute toggle |
 | 🐾 | A handful of little easter eggs hiding in hovers, clicks, and corners |
 
 ## ✦ Built with
 
-- **Next.js** + **React** + **TypeScript** — App Router, mostly server components
+- **Next.js** + **React** + **TypeScript** — App Router, a server-rendered page with client interactivity islands
 - **Tailwind CSS** for styling, **Framer Motion** for the motion layer
 - Local TypeScript data files for content — no CMS, no database
 
