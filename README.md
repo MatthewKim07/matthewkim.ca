@@ -21,9 +21,12 @@ A personal portfolio built to feel handcrafted — minimal on the surface, with 
 | | |
 |---|---|
 | 🤖 | Mechatronics @ Waterloo, building software, robotics, and AI tooling |
-| 🖼️ | A generative art gallery showcasing projects, several with video demos |
+| 🖼️ | A generative art gallery of projects, several with hover link previews and video demos |
+| 🧳 | A draggable travel gallery with a three.js airplane transition |
+| 💼 | Experience and tech-stack sections with rich hover previews |
 | ✨ | Intro icons that animate uniquely on hover, each tuned to what it means |
-| 📜 | A public-domain quote in the footer that changes every day |
+| 🖱️ | A cursor image trail with live controls, plus light/dark theme toggle |
+| 📜 | A public-domain quote in the footer, with its author, that changes every day |
 | 🎵 | A playlist easter egg and a tiny sound design system, with a mute toggle |
 | 🐾 | A handful of little easter eggs hiding in hovers, clicks, and corners |
 
@@ -31,6 +34,7 @@ A personal portfolio built to feel handcrafted — minimal on the surface, with 
 
 - **Next.js** + **React** + **TypeScript** — App Router, a server-rendered page with client interactivity islands
 - **Tailwind CSS** for styling, **Framer Motion** for the motion layer
+- **three.js** for the travel airplane transition, **lucide-react** for icons
 - Local TypeScript data files for content — no CMS, no database
 
 ## ✦ Connect
