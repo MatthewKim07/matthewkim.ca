@@ -64,7 +64,9 @@ export type SceneObjectKind =
   | "lamp"
   | "beanbag"
   | "poster"
-  | "stringlights";
+  | "stringlights"
+  | "clock"
+  | "slippers";
 
 /** Floor patches painted over the wood base to build a readable room. */
 export type TerrainKind = "rug" | "matt";

@@ -38,8 +38,9 @@ const C = {
   leafHi: "#74c75f",
   leafDark: "#3f8038",
   // bedding / fabrics
-  blanket: "#5b8dd6",
-  blanketDk: "#456fae",
+  blanket: "#4fa8e6",
+  blanketDk: "#3a86c6",
+  blanketHi: "#7ec4f2",
   pillow: "#f3efe4",
   bean: "#e08a4f",
   beanDk: "#c06f37",
@@ -127,7 +128,7 @@ export function renderScene(
   drawFloor(ctx, scene.width, scene.height);
   for (const p of scene.terrain) drawTerrain(ctx, p);
   drawWalls(ctx, scene.width, scene.height);
-  if (state.gatePowered) drawDoorSpill(ctx, scene);
+  if (state.gatePowered) drawDoorSpill(ctx, scene, time);
 
   // Depth sort objects, fragments, player by foot Y.
   type Drawable = { y: number; draw: () => void };
@@ -145,6 +146,21 @@ export function renderScene(
   });
   drawables.sort((a, b) => a.y - b.y);
   for (const d of drawables) d.draw();
+
+  // Restrained idle hint: a faint dot above interactables the player is near
+  // (the closest one shows the full prompt instead).
+  const pcx = state.player.x + state.player.w / 2;
+  const pcy = state.player.y + state.player.h / 2;
+  for (const o of scene.objects) {
+    if (!o.interact || o.id === state.nearestId) continue;
+    const ocx = o.rect.x + o.rect.w / 2;
+    const ocy = o.rect.y + o.rect.h / 2;
+    if ((pcx - ocx) ** 2 + (pcy - ocy) ** 2 > 60 * 60) continue;
+    const a = opts.reduceMotion ? 0.22 : 0.14 + 0.12 * Math.sin(time / 600 + o.rect.x);
+    const dy = opts.reduceMotion ? 0 : Math.round(Math.sin(time / 500 + o.rect.x) * 1);
+    ctx.fillStyle = `rgba(254,211,76,${a})`;
+    ctx.fillRect(ocx - 1, o.rect.y - 6 + dy, 2, 2);
+  }
 
   if (opts.showPrompt && state.nearestId) {
     const obj = scene.objects.find((o) => o.id === state.nearestId);
@@ -191,8 +207,13 @@ function drawTerrain(ctx: CanvasRenderingContext2D, p: TerrainPatch) {
       ctx.restore();
     }
   } else {
-    ctx.fillStyle = C.wallShade;
+    // doormat
+    ctx.fillStyle = "#b5563f";
     ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.fillStyle = "#cd6a4f";
+    ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+    ctx.fillStyle = "#e08a4f";
+    for (let x = r.x + 4; x < r.x + r.w - 2; x += 6) ctx.fillRect(x, r.y + 3, 2, r.h - 6);
   }
 }
 
@@ -226,17 +247,30 @@ function drawWalls(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillRect(t, t, w - 2 * t, 8);
 }
 
-// Warm light spilling under the door once it's unlocked.
-function drawDoorSpill(ctx: CanvasRenderingContext2D, scene: GameState["scene"]) {
+// Warm daylight spilling into the room once the door is unlocked — a gentle
+// beckoning pulse (static when time === 0, i.e. reduced motion).
+function drawDoorSpill(ctx: CanvasRenderingContext2D, scene: GameState["scene"], time: number) {
   const door = scene.objects.find((o) => o.kind === "door");
   if (!door) return;
   const cx = door.rect.x + door.rect.w / 2;
-  const cy = door.rect.y - 2;
-  const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 30);
-  g.addColorStop(0, "rgba(254,211,76,0.28)");
+  const cy = door.rect.y - 4;
+  const pulse = 0.5 + 0.5 * Math.sin(time / 480);
+  const r = 38 + pulse * 6;
+  const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, r);
+  g.addColorStop(0, `rgba(255,238,176,${0.34 + 0.12 * pulse})`);
+  g.addColorStop(0.5, "rgba(254,211,76,0.12)");
   g.addColorStop(1, "rgba(254,211,76,0)");
   ctx.fillStyle = g;
-  ctx.fillRect(cx - 30, cy - 24, 60, 40);
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  // a soft beam fanning up into the room
+  ctx.fillStyle = `rgba(255,244,200,${0.1 + 0.05 * pulse})`;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6, cy);
+  ctx.lineTo(cx - 18, cy - 28);
+  ctx.lineTo(cx + 18, cy - 28);
+  ctx.lineTo(cx + 6, cy);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number, powered = false) {
@@ -289,19 +323,59 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
       ctx.fillRect(r.x + 10, r.y + 9, 4, 6);
       break;
     }
+    case "clock": {
+      const cx = r.x + r.w / 2;
+      const cy = r.y + r.h / 2;
+      ctx.fillStyle = C.outline;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r.w / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = C.cream;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r.w / 2 - 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = C.navy;
+      ctx.fillRect(cx - 1, cy - 4, 2, 5); // hour hand
+      ctx.fillRect(cx, cy - 1, 4, 2); // minute hand
+      ctx.fillStyle = C.accent;
+      ctx.fillRect(cx - 1, cy - 1, 2, 2);
+      break;
+    }
+    case "slippers": {
+      const sw = (r.w - 2) / 2;
+      for (let i = 0; i < 2; i++) {
+        const sx = r.x + i * (sw + 2);
+        ctx.fillStyle = C.outline;
+        ctx.fillRect(sx, r.y, sw, r.h);
+        ctx.fillStyle = "#e3614f";
+        ctx.fillRect(sx + 1, r.y + 1, sw - 2, r.h - 2);
+        ctx.fillStyle = C.cream;
+        ctx.fillRect(sx + 1, r.y + 1, sw - 2, 2); // toe strap
+      }
+      break;
+    }
     case "bed": {
       shadow(ctx, r.x + r.w / 2, r.y + r.h, r.w / 2, 3);
       block(ctx, r.x, r.y, r.w, r.h, C.wood); // frame
-      // mattress + blanket
+      // sheets
       ctx.fillStyle = C.cream;
-      ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, 12); // pillow zone
+      ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+      // pillows across the top
       ctx.fillStyle = C.pillow;
-      ctx.fillRect(r.x + 4, r.y + 4, 14, 8); // pillow
-      block(ctx, r.x + 2, r.y + 14, r.w - 4, r.h - 16, C.blanket);
+      ctx.fillRect(r.x + 4, r.y + 4, (r.w - 8) / 2 - 1, 12);
+      ctx.fillRect(r.x + 4 + (r.w - 8) / 2 + 1, r.y + 4, (r.w - 8) / 2 - 1, 12);
+      ctx.fillStyle = "#e6ddc8";
+      ctx.fillRect(r.x + 6, r.y + 9, r.w - 12, 1);
+      // blanket over the lower two-thirds
+      block(ctx, r.x + 2, r.y + 19, r.w - 4, r.h - 21, C.blanket);
+      ctx.fillStyle = C.blanketHi;
+      ctx.fillRect(r.x + 3, r.y + 20, r.w - 6, 2); // fold highlight
       ctx.fillStyle = C.blanketDk;
-      ctx.fillRect(r.x + 3, r.y + 15, r.w - 6, 2);
+      ctx.fillRect(r.x + 3, r.y + 23, r.w - 6, 1);
       ctx.fillStyle = C.accent;
-      ctx.fillRect(r.x + 3, r.y + r.h - 6, r.w - 6, 2); // accent stripe
+      ctx.fillRect(r.x + 3, r.y + 27, r.w - 6, 2); // accent stripe
+      ctx.fillStyle = C.woodHi;
+      ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3); // footboard
       break;
     }
     case "bookshelf": {
@@ -359,13 +433,22 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
       block(ctx, r.x, r.y, r.w, r.h, C.wood);
       ctx.fillStyle = C.woodHi;
       ctx.fillRect(r.x, r.y + r.h / 2 - 1, r.w, 1);
-      const snacks = [C.red, C.green, C.accent, C.pink];
+      ctx.fillRect(r.x, r.y, r.w, 1);
+      const snacks = [C.red, C.green, C.accent, C.sky];
       for (let row = 0; row < 2; row++) {
         for (let i = 0; i < 3; i++) {
           ctx.fillStyle = snacks[(row * 3 + i) % snacks.length];
           ctx.fillRect(r.x + 2 + i * 4, r.y + 2 + row * (r.h / 2), 3, r.h / 2 - 3);
         }
       }
+      // a recognizable red packet with a white roundel + a tiny hangul mark
+      ctx.fillStyle = C.red;
+      ctx.fillRect(r.x + 2, r.y + 2, 3, r.h / 2 - 3);
+      ctx.fillStyle = C.cream;
+      ctx.fillRect(r.x + 3, r.y + 4, 1, 1); // roundel
+      ctx.fillStyle = "#7c1f15";
+      ctx.fillRect(r.x + 2, r.y + 6, 2, 1); // hangul-ish stroke
+      ctx.fillRect(r.x + 3, r.y + 7, 1, 1);
       break;
     }
     case "hoop": {
@@ -388,21 +471,47 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
     }
     case "recordplayer": {
       shadow(ctx, r.x + r.w / 2, r.y + r.h, r.w / 2, 3);
-      // crate
-      ctx.fillStyle = C.woodDark;
-      ctx.fillRect(r.x, r.y + 12, r.w, r.h - 12);
-      block(ctx, r.x, r.y, r.w, 13, "#2b3340"); // turntable box
-      // platter + record
+      // wooden cabinet base
+      block(ctx, r.x, r.y + 7, r.w, r.h - 7, C.woodDark);
+      ctx.fillStyle = C.woodHi;
+      ctx.fillRect(r.x + 1, r.y + 8, r.w - 2, 1);
+      // turntable deck
+      block(ctx, r.x, r.y, r.w, 14, "#2b3340");
+      const cx = r.x + 11;
+      const cy = r.y + 7;
+      // platter
+      ctx.fillStyle = "#525c6b";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      // vinyl record
       ctx.fillStyle = "#11151c";
       ctx.beginPath();
-      ctx.arc(r.x + 11, r.y + 7, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
       ctx.fill();
+      // groove + accent label
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.fillStyle = C.accent;
       ctx.beginPath();
-      ctx.arc(r.x + 11, r.y + 7, 2, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#c9d2dd";
-      ctx.fillRect(r.x + 14, r.y + 2, 7, 1); // tonearm
+      // spinning speck (static under reduced motion since time === 0)
+      const ang = time / 600;
+      ctx.fillStyle = "#fff0bf";
+      ctx.fillRect(Math.round(cx + Math.cos(ang) * 3) - 0.5, Math.round(cy + Math.sin(ang) * 3) - 0.5, 1, 1);
+      // tonearm: pivot at corner reaching to the record edge
+      ctx.fillStyle = "#7c8696";
+      ctx.fillRect(r.x + r.w - 5, r.y + 2, 3, 3); // pivot
+      ctx.strokeStyle = "#c9d2dd";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(r.x + r.w - 4, r.y + 3);
+      ctx.lineTo(cx + 3, cy - 2);
+      ctx.stroke();
       break;
     }
     case "vinylcrate": {
@@ -418,23 +527,41 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
     case "corkboard": {
       block(ctx, r.x, r.y, r.w, r.h, C.cork);
       ctx.fillStyle = C.corkDk;
-      ctx.fillRect(r.x + 1, r.y + 1, r.w - 2, 1);
-      // little map
+      ctx.strokeStyle = C.corkDk;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
+      // map sheet
+      ctx.fillStyle = "#dfe9ef";
+      ctx.fillRect(r.x + 3, r.y + 3, r.w - 6, 20);
       ctx.fillStyle = C.sky;
-      ctx.fillRect(r.x + 2, r.y + 3, r.w - 4, 14);
+      ctx.fillRect(r.x + 4, r.y + 4, r.w - 8, 18); // ocean
       ctx.fillStyle = C.leaf;
-      ctx.fillRect(r.x + 3, r.y + 6, 5, 4);
-      // pins (seoul = accent, toronto = red)
+      ctx.fillRect(r.x + 5, r.y + 6, 6, 6); // landmass
+      ctx.fillRect(r.x + 9, r.y + 13, 5, 5);
+      // pins + a string between seoul (accent) and toronto (red)
+      const seoul = { x: r.x + 6, y: r.y + 8 };
+      const toronto = { x: r.x + 12, y: r.y + 16 };
+      ctx.strokeStyle = "rgba(227,97,79,0.7)";
+      ctx.beginPath();
+      ctx.moveTo(seoul.x, seoul.y);
+      ctx.lineTo(toronto.x, toronto.y);
+      ctx.stroke();
       ctx.fillStyle = C.accent;
-      ctx.fillRect(r.x + 9, r.y + 5, 2, 2);
+      ctx.fillRect(seoul.x - 1, seoul.y - 1, 2, 2);
       ctx.fillStyle = C.red;
-      ctx.fillRect(r.x + 5, r.y + 12, 2, 2);
-      // polaroids + ticket
+      ctx.fillRect(toronto.x - 1, toronto.y - 1, 2, 2);
+      // polaroids (white frame + photo) + a ticket stub
       ctx.fillStyle = C.cream;
-      ctx.fillRect(r.x + 2, r.y + 20, 5, 6);
-      ctx.fillRect(r.x + 8, r.y + 22, 5, 6);
+      ctx.fillRect(r.x + 3, r.y + 26, 6, 7);
+      ctx.fillRect(r.x + 10, r.y + 28, 6, 7);
+      ctx.fillStyle = C.green;
+      ctx.fillRect(r.x + 4, r.y + 27, 4, 4);
+      ctx.fillStyle = C.pink;
+      ctx.fillRect(r.x + 11, r.y + 29, 4, 4);
       ctx.fillStyle = C.accentDk;
-      ctx.fillRect(r.x + 3, r.y + 30, 8, 3); // ticket stub
+      ctx.fillRect(r.x + 3, r.y + 37, 11, 3); // ticket stub
+      ctx.fillStyle = C.cork;
+      ctx.fillRect(r.x + 6, r.y + 38, 1, 1);
       break;
     }
     case "bubbybed": {
@@ -505,10 +632,18 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
       shadow(ctx, r.x + r.w / 2, r.y + r.h, r.w / 2, 2);
       block(ctx, r.x - 2, r.y - 2, r.w + 4, r.h + 2, C.woodDark); // frame
       if (powered) {
-        // ajar: warm gap of "outside" + lit panel
-        ctx.fillStyle = "#fff0bf";
-        ctx.fillRect(r.x + 2, r.y + 1, 7, r.h - 2);
-        block(ctx, r.x + 9, r.y + 1, r.w - 11, r.h - 2, C.wood);
+        // bright daylight beyond + the door swung ajar
+        const grad = ctx.createLinearGradient(r.x, 0, r.x + 13, 0);
+        grad.addColorStop(0, "#fff7d6");
+        grad.addColorStop(1, "#ffe9a0");
+        ctx.fillStyle = grad;
+        ctx.fillRect(r.x + 1, r.y, 13, r.h);
+        // the door panel pushed open to the right, edge-on for depth
+        block(ctx, r.x + 14, r.y, r.w - 16, r.h, C.wood);
+        ctx.fillStyle = C.woodHi;
+        ctx.fillRect(r.x + 15, r.y + 1, 2, r.h - 2); // lit inner edge
+        ctx.fillStyle = C.woodDark;
+        ctx.fillRect(r.x + 19, r.y + 3, r.w - 24, 3);
         ctx.fillStyle = C.accent;
         ctx.fillRect(r.x + r.w - 5, r.y + r.h / 2 - 1, 2, 2); // knob lit
       } else {

@@ -21,28 +21,34 @@ export const SPAWN_ROOM: Scene = {
     { x: 240, y: 0, w: 16, h: 192 },
   ],
 
-  terrain: [{ kind: "rug", rect: { x: 88, y: 78, w: 80, h: 62 } }],
+  terrain: [
+    { kind: "rug", rect: { x: 88, y: 78, w: 80, h: 62 } },
+    // doormat fills the floor by the door
+    { kind: "matt", rect: { x: 106, y: 160, w: 44, h: 14 } },
+  ],
 
   objects: [
     // --- wall dressing ---
     { id: "window", kind: "window", rect: { x: 100, y: 2, w: 56, h: 14 } },
     { id: "stringlights", kind: "stringlights", rect: { x: 18, y: 13, w: 220, h: 4 } },
+    { id: "clock", kind: "clock", rect: { x: 138, y: 18, w: 14, h: 14 } },
     { id: "poster", kind: "poster", rect: { x: 166, y: 18, w: 18, h: 22 } },
 
-    // --- bed (top-left) ---
-    { id: "bed", kind: "bed", rect: { x: 22, y: 22, w: 46, h: 36 }, solid: true },
+    // --- bed (top-left), larger and clearer ---
+    { id: "bed", kind: "bed", rect: { x: 20, y: 22, w: 52, h: 44 }, solid: true },
 
-    // --- lamp + beanbag (life) ---
-    { id: "lamp", kind: "lamp", rect: { x: 72, y: 56, w: 8, h: 22 } },
+    // --- bedside lamp + beanbag + floor slippers (life) ---
+    { id: "lamp", kind: "lamp", rect: { x: 76, y: 40, w: 8, h: 24 } },
     { id: "beanbag", kind: "beanbag", rect: { x: 150, y: 118, w: 24, h: 18 } },
+    { id: "slippers", kind: "slippers", rect: { x: 120, y: 150, w: 16, h: 8 } },
 
     // --- travel corkboard (interactable, left wall) ---
     {
       id: "corkboard",
       kind: "corkboard",
-      rect: { x: 16, y: 70, w: 14, h: 38 },
+      rect: { x: 16, y: 62, w: 18, h: 48 },
       interact: {
-        zone: { x: 30, y: 74, w: 24, h: 30 },
+        zone: { x: 34, y: 72, w: 24, h: 34 },
         dialogue: {
           title: "travel board",
           lines: [
@@ -99,7 +105,7 @@ export const SPAWN_ROOM: Scene = {
         dialogue: {
           title: "hoop",
           lines: [
-            "my ball — the grip's worn smooth on one side.",
+            "the rim's bent just enough to be annoying.",
             "i shoot to clear my head. mostly i just like the sound.",
           ],
         },
@@ -165,7 +171,7 @@ export const SPAWN_ROOM: Scene = {
 
   // Three personal "things" to gather before the door opens.
   fragments: [
-    { id: "ball", x: 230, y: 140, icon: "ball", label: "grabbed your ball" },
+    { id: "ball", x: 230, y: 140, icon: "ball", label: "your ball — grip worn smooth" },
     { id: "record", x: 62, y: 136, icon: "record", label: "record packed" },
     { id: "polaroid", x: 46, y: 108, icon: "polaroid", label: "polaroid found" },
   ],
