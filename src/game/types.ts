@@ -47,22 +47,27 @@ export interface Dialogue {
 }
 
 export type SceneObjectKind =
-  | "workbench"
-  | "noticeboard"
-  | "gate"
-  | "building"
-  | "tree"
-  | "bush"
-  | "barrel"
-  | "crate"
+  | "bed"
+  | "bookshelf"
+  | "desk"
+  | "laptop"
+  | "chair"
+  | "snackshelf"
+  | "hoop"
+  | "recordplayer"
+  | "vinylcrate"
+  | "corkboard"
+  | "bubbybed"
+  | "window"
+  | "door"
+  | "plant"
   | "lamp"
-  | "signpost"
-  | "flowers"
-  | "rock"
-  | "well";
+  | "beanbag"
+  | "poster"
+  | "stringlights";
 
-/** Ground patches painted under the objects to build a readable overworld. */
-export type TerrainKind = "path" | "plaza" | "water" | "grassDark" | "flowerbed" | "sand";
+/** Floor patches painted over the wood base to build a readable room. */
+export type TerrainKind = "rug" | "matt";
 
 export interface TerrainPatch {
   kind: TerrainKind;
@@ -84,15 +89,19 @@ export interface SceneObject {
     zone: Rect;
     dialogue: Dialogue;
   };
-  /** Alternate dialogue shown once the workshop is powered (e.g. the gate). */
+  /** Alternate dialogue shown once all things are collected (e.g. the door). */
   poweredDialogue?: Dialogue;
 }
 
-/** A collectible "build fragment". Position is the centre in world pixels. */
+/** A collectible personal "thing". Position is the centre in world pixels. */
 export interface Fragment {
   id: string;
   x: number;
   y: number;
+  /** Which item to draw. */
+  icon?: "ball" | "record" | "polaroid";
+  /** Toast shown when picked up. */
+  label?: string;
 }
 
 export interface Scene {

@@ -72,7 +72,7 @@ export function GameScene({
     if (dialogueRef.current) return;
     const obj = findObject(stateRef.current?.nearestId ?? null);
     if (!obj?.interact) return;
-    // The gate switches to its powered lines once the workshop is awake.
+    // The door switches to its open lines once all things are gathered.
     const d =
       stateRef.current?.gatePowered && obj.poweredDialogue ? obj.poweredDialogue : obj.interact.dialogue;
     openDialogue(d);
@@ -124,23 +124,20 @@ export function GameScene({
         for (const e of state.events) {
           if (e.type === "fragment") {
             setCollected(state.collected);
-            showToast(
-              state.collected >= TOTAL
-                ? "fragment found — workshop awake"
-                : `fragment found — ${state.collected}/${TOTAL}`
-            );
-            if (!reduceMotion) {
-              const f = state.fragments.find((fr) => fr.id === e.id);
-              if (f) effectsRef.current.push({ x: f.x, y: f.y, start: now, kind: "fragment" });
+            const f = state.fragments.find((fr) => fr.id === e.id);
+            const meta = SPAWN_ROOM.fragments.find((fr) => fr.id === e.id);
+            showToast(meta?.label ?? `things ${state.collected}/${TOTAL}`);
+            if (!reduceMotion && f) {
+              effectsRef.current.push({ x: f.x, y: f.y, start: now, kind: "fragment" });
             }
           } else if (e.type === "gate") {
-            showToast("gate powered");
+            showToast("door unlocked");
             if (!reduceMotion) {
-              const g = state.scene.objects.find((o) => o.kind === "gate");
-              if (g) {
+              const door = state.scene.objects.find((o) => o.kind === "door");
+              if (door) {
                 effectsRef.current.push({
-                  x: g.rect.x + g.rect.w / 2,
-                  y: g.rect.y + g.rect.h / 2,
+                  x: door.rect.x + door.rect.w / 2,
+                  y: door.rect.y + door.rect.h / 2,
                   start: now,
                   kind: "gate",
                 });
@@ -207,20 +204,16 @@ export function GameScene({
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="The Workshop Courtyard, a bright top-down outdoor area. Use arrow keys or WASD to move and E to interact."
+        aria-label="matthew's room, a bright top-down bedroom inside matthew.exe. Use arrow keys or WASD to move and E to interact."
         className="absolute inset-0 h-full w-full"
       />
 
       {/* Offscreen description for assistive tech (canvas is decorative). */}
       <p className="sr-only">
-        The Workshop Courtyard: a small sunny plaza you can walk around, with a workshop building, a
-        pond, trees and stone paths. Objective: collect three build fragments scattered around the
-        courtyard to wake the workshop and power the gate. It contains a workbench with a terminal, a
-        notice board, and a half-built gate. Move with the arrow keys or WASD, press E near an object
-        to read it, Escape to return to the menu.
+        {`matthew's room: a cozy, bright bedroom you can walk around, with a bed, a desk and laptop, a mini hoop, a record player, a travel corkboard, a shelf of korean snacks, bubby's bed, a window, and a door out. Objective: gather three personal things — your basketball, a record, and a polaroid — and the door unlocks. Move with the arrow keys or WASD, press E near an object to read it, Escape to return to the menu.`}
       </p>
       <p className="sr-only" aria-live="polite">
-        {collected >= TOTAL ? "Workshop awake. Gate powered." : `Fragments collected: ${collected} of ${TOTAL}.`}
+        {collected >= TOTAL ? "Got everything. The door is unlocked." : `Things gathered: ${collected} of ${TOTAL}.`}
       </p>
 
       {/* Top bar: Menu + hard close. */}
@@ -263,11 +256,11 @@ export function GameScene({
           {collected >= TOTAL ? (
             <span className="flex items-center gap-1.5 text-[#FED34C]">
               <span aria-hidden className="inline-block h-1.5 w-1.5 rotate-45 bg-[#FED34C]" />
-              workshop awake
+              ready
             </span>
           ) : (
             <>
-              <span>fragments</span>
+              <span>things</span>
               <span aria-hidden className="flex items-center gap-1">
                 {Array.from({ length: TOTAL }).map((_, i) => (
                   <span

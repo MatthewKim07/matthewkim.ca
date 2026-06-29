@@ -1,143 +1,172 @@
 import type { Scene } from "@/game/types";
 
-// The Workshop Courtyard — Matthew's bright spawn hub. A small open-air plaza
-// (320x224) with grass, stone paths, a workshop building, a pond, trees and
-// props, and a half-built gate that hints at the larger world. Hand-composed
-// for a readable top-down overworld. Dialogue is data-driven here; the renderer
-// draws each `kind`, so real sprites can drop in later without changing layout.
+// matthew's room — the first playable scene inside matthew.exe. A cozy, bright
+// DS-era top-down bedroom you spawn into and explore. Personal, not a project
+// hub. Dialogue is data-driven; the renderer draws each `kind`, so real sprites
+// can replace the shapes later without changing the layout.
+//
+// (Export name kept as SPAWN_ROOM to avoid import churn.)
 export const SPAWN_ROOM: Scene = {
-  id: "workshop-courtyard",
-  name: "The Workshop Courtyard",
-  width: 320,
-  height: 224,
-  spawn: { x: 155, y: 124 },
+  id: "matthews-room",
+  name: "matthew's room",
+  width: 256,
+  height: 192,
+  spawn: { x: 120, y: 106 },
 
-  // Hedged map border (collision).
+  // Room walls (collision).
   walls: [
-    { x: 0, y: 0, w: 320, h: 14 },
-    { x: 0, y: 210, w: 320, h: 14 },
-    { x: 0, y: 0, w: 14, h: 224 },
-    { x: 306, y: 0, w: 14, h: 224 },
+    { x: 0, y: 0, w: 256, h: 16 },
+    { x: 0, y: 176, w: 256, h: 16 },
+    { x: 0, y: 0, w: 16, h: 192 },
+    { x: 240, y: 0, w: 16, h: 192 },
   ],
 
-  terrain: [
-    // central stone plaza
-    { kind: "plaza", rect: { x: 108, y: 90, w: 104, h: 72 } },
-    // main road across the courtyard, leading to the gate
-    { kind: "path", rect: { x: 14, y: 116, w: 292, h: 28 } },
-    // path up to the notice board
-    { kind: "path", rect: { x: 148, y: 42, w: 28, h: 80 } },
-    // pond
-    { kind: "water", rect: { x: 250, y: 26, w: 56, h: 44 } },
-    { kind: "sand", rect: { x: 244, y: 22, w: 68, h: 52 } },
-    // flower beds + shaded grass
-    { kind: "flowerbed", rect: { x: 28, y: 172, w: 44, h: 24 } },
-    { kind: "flowerbed", rect: { x: 250, y: 174, w: 44, h: 22 } },
-    { kind: "grassDark", rect: { x: 200, y: 150, w: 60, h: 44 } },
-  ],
+  terrain: [{ kind: "rug", rect: { x: 88, y: 78, w: 80, h: 62 } }],
 
   objects: [
-    // --- landmark: the workshop building ---
-    { id: "building", kind: "building", rect: { x: 26, y: 28, w: 86, h: 64 }, solid: true },
+    // --- wall dressing ---
+    { id: "window", kind: "window", rect: { x: 100, y: 2, w: 56, h: 14 } },
+    { id: "stringlights", kind: "stringlights", rect: { x: 18, y: 13, w: 220, h: 4 } },
+    { id: "poster", kind: "poster", rect: { x: 166, y: 18, w: 18, h: 22 } },
 
-    // --- workbench terminal (interactable) in front of the workshop ---
+    // --- bed (top-left) ---
+    { id: "bed", kind: "bed", rect: { x: 22, y: 22, w: 46, h: 36 }, solid: true },
+
+    // --- lamp + beanbag (life) ---
+    { id: "lamp", kind: "lamp", rect: { x: 72, y: 56, w: 8, h: 22 } },
+    { id: "beanbag", kind: "beanbag", rect: { x: 150, y: 118, w: 24, h: 18 } },
+
+    // --- travel corkboard (interactable, left wall) ---
     {
-      id: "workbench",
-      kind: "workbench",
-      rect: { x: 46, y: 96, w: 44, h: 16 },
-      solid: true,
+      id: "corkboard",
+      kind: "corkboard",
+      rect: { x: 16, y: 70, w: 14, h: 38 },
       interact: {
-        zone: { x: 42, y: 114, w: 54, h: 24 },
+        zone: { x: 30, y: 74, w: 24, h: 30 },
         dialogue: {
-          title: "workbench",
+          title: "travel board",
           lines: [
-            "the terminal blinks awake. it remembers every half-finished idea i've fed it.",
-            "this is where things start — small tools, robots, builds that outgrow the bench.",
-            "power's low, though. the whole place is running on one light.",
+            "pins, ticket stubs, a couple of polaroids.",
+            "seoul, toronto, a few places in between.",
           ],
         },
       },
     },
 
-    // --- notice board (interactable) up the north path ---
+    // --- bookshelf (left wall) ---
+    { id: "bookshelf", kind: "bookshelf", rect: { x: 18, y: 120, w: 16, h: 42 }, solid: true },
+
+    // --- desk + laptop (interactable, top-right) ---
+    { id: "desk", kind: "desk", rect: { x: 166, y: 22, w: 62, h: 24 }, solid: true },
+    { id: "chair", kind: "chair", rect: { x: 190, y: 50, w: 14, h: 12 }, solid: true },
     {
-      id: "noticeboard",
-      kind: "noticeboard",
-      rect: { x: 138, y: 42, w: 48, h: 24 },
-      solid: true,
+      id: "laptop",
+      kind: "laptop",
+      rect: { x: 184, y: 16, w: 22, h: 12 },
       interact: {
-        zone: { x: 138, y: 66, w: 48, h: 24 },
+        zone: { x: 176, y: 46, w: 44, h: 18 },
         dialogue: {
-          title: "notice board",
+          title: "desk",
           lines: [
-            "pinned notes, arrows, and one stubborn sketch of a robot arm.",
-            "i think by building. sketch it, break it, learn why, try again.",
-            "there's a list here — mostly things i haven't made yet.",
+            "the laptop, half-closed, fan still warm.",
+            "this is where the late nights live. half of them are just debugging.",
           ],
         },
       },
     },
 
-    // --- the gate (interactable, under construction) at the road's end ---
+    // --- korean snack shelf (interactable, right wall) ---
     {
-      id: "gate",
-      kind: "gate",
-      rect: { x: 278, y: 102, w: 26, h: 46 },
+      id: "snackshelf",
+      kind: "snackshelf",
+      rect: { x: 226, y: 58, w: 14, h: 20 },
+      interact: {
+        zone: { x: 208, y: 60, w: 18, h: 18 },
+        dialogue: {
+          title: "snacks",
+          lines: ["a shelf of korean snacks i don't share."],
+        },
+      },
+    },
+
+    // --- mini hoop (interactable, right wall) ---
+    {
+      id: "hoop",
+      kind: "hoop",
+      rect: { x: 224, y: 104, w: 16, h: 14 },
+      interact: {
+        zone: { x: 214, y: 120, w: 28, h: 20 },
+        dialogue: {
+          title: "hoop",
+          lines: [
+            "my ball — the grip's worn smooth on one side.",
+            "i shoot to clear my head. mostly i just like the sound.",
+          ],
+        },
+      },
+    },
+
+    // --- record player corner (interactable, bottom-left) ---
+    {
+      id: "recordplayer",
+      kind: "recordplayer",
+      rect: { x: 26, y: 148, w: 32, h: 22 },
       solid: true,
       interact: {
-        zone: { x: 248, y: 112, w: 30, h: 28 },
+        zone: { x: 26, y: 132, w: 36, h: 16 },
         dialogue: {
-          title: "the gate",
+          title: "records",
           lines: [
-            "a half-built gate. the road keeps going past it.",
-            "more of this world is still going up. places i'm still figuring out.",
-            "it runs on fragments. find a few and it'll open.",
+            "something's still spinning.",
+            "i pick records by mood, not genre. usually the wrong one.",
+          ],
+        },
+      },
+    },
+    { id: "vinylcrate", kind: "vinylcrate", rect: { x: 60, y: 152, w: 14, h: 18 }, solid: true },
+
+    // --- bubby's bed (interactable, bottom-right) ---
+    {
+      id: "bubbybed",
+      kind: "bubbybed",
+      rect: { x: 198, y: 150, w: 32, h: 20 },
+      interact: {
+        zone: { x: 196, y: 134, w: 36, h: 16 },
+        dialogue: {
+          title: "bubby's bed",
+          lines: ["bubby's bed, still warm. he was just here."],
+        },
+      },
+    },
+    { id: "plant", kind: "plant", rect: { x: 222, y: 160, w: 12, h: 14 }, solid: true },
+
+    // --- the door out (interactable, bottom wall) ---
+    {
+      id: "door",
+      kind: "door",
+      rect: { x: 110, y: 178, w: 36, h: 14 },
+      solid: true,
+      interact: {
+        zone: { x: 104, y: 160, w: 48, h: 18 },
+        dialogue: {
+          title: "door",
+          lines: [
+            "the door's stuck. or maybe i'm not ready to head out yet.",
+            "grab my stuff first.",
           ],
         },
       },
       poweredDialogue: {
-        title: "the gate",
-        lines: [
-          "the gate hums awake.",
-          "whatever is past it is still being built.",
-          "but now the workshop knows where to send you next.",
-        ],
+        title: "door",
+        lines: ["okay — got what matters.", "the rest of the world's still loading. soon."],
       },
     },
-
-    // --- plaza lamps (glow) ---
-    { id: "lamp-l", kind: "lamp", rect: { x: 116, y: 84, w: 8, h: 26 } },
-    { id: "lamp-r", kind: "lamp", rect: { x: 196, y: 84, w: 8, h: 26 } },
-
-    // --- signpost near spawn ---
-    { id: "signpost", kind: "signpost", rect: { x: 172, y: 132, w: 14, h: 18 } },
-
-    // --- well landmark ---
-    { id: "well", kind: "well", rect: { x: 214, y: 150, w: 24, h: 24 }, solid: true },
-
-    // --- trees (solid trunk only, so the canopy isn't sticky) ---
-    { id: "tree-1", kind: "tree", rect: { x: 18, y: 150, w: 28, h: 36 }, solid: true, collision: { x: 27, y: 176, w: 10, h: 9 } },
-    { id: "tree-2", kind: "tree", rect: { x: 284, y: 158, w: 26, h: 34 }, solid: true, collision: { x: 292, y: 182, w: 10, h: 9 } },
-    { id: "tree-3", kind: "tree", rect: { x: 206, y: 36, w: 24, h: 30 }, solid: true, collision: { x: 213, y: 58, w: 10, h: 7 } },
-
-    // --- props ---
-    { id: "barrel-1", kind: "barrel", rect: { x: 96, y: 150, w: 14, h: 16 }, solid: true },
-    { id: "barrel-2", kind: "barrel", rect: { x: 110, y: 154, w: 12, h: 14 }, solid: true },
-    { id: "crate-1", kind: "crate", rect: { x: 72, y: 170, w: 20, h: 18 }, solid: true },
-    { id: "rock-1", kind: "rock", rect: { x: 232, y: 60, w: 16, h: 11 } },
-
-    // --- bushes + flowers (decor) ---
-    { id: "bush-1", kind: "bush", rect: { x: 124, y: 168, w: 18, h: 14 } },
-    { id: "bush-2", kind: "bush", rect: { x: 178, y: 170, w: 18, h: 14 } },
-    { id: "flowers-1", kind: "flowers", rect: { x: 30, y: 174, w: 40, h: 20 } },
-    { id: "flowers-2", kind: "flowers", rect: { x: 252, y: 176, w: 40, h: 18 } },
   ],
 
-  // Three build fragments — visible but slightly exploratory: by the corner
-  // tree, beside the well, and up near the gate/building.
+  // Three personal "things" to gather before the door opens.
   fragments: [
-    { id: "frag-1", x: 54, y: 158 },
-    { id: "frag-2", x: 242, y: 140 },
-    { id: "frag-3", x: 262, y: 92 },
+    { id: "ball", x: 230, y: 140, icon: "ball", label: "grabbed your ball" },
+    { id: "record", x: 62, y: 136, icon: "record", label: "record packed" },
+    { id: "polaroid", x: 46, y: 108, icon: "polaroid", label: "polaroid found" },
   ],
 };
