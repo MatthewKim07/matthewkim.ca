@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
 import { renderScene, BUBBY_POINT_MS, type BubbyRender, type PickupEffect, type ShotRender } from "@/game/render";
 import { createInput } from "@/game/input";
@@ -62,11 +62,9 @@ function shotResult(p: number): { make: boolean; text: string } {
 
 export function GameScene({
   onMenu,
-  onClose,
   reduceMotion,
 }: {
   onMenu: () => void;
-  onClose: () => void;
   reduceMotion: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -509,6 +507,7 @@ export function GameScene({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (document.fullscreenElement) return;
         e.preventDefault();
         if (dialogueRef.current) closeDialogue();
         else if (choosingRef.current) closeSelector();
@@ -566,9 +565,9 @@ export function GameScene({
         {collected >= TOTAL ? "Got everything. The door is unlocked." : `Things gathered: ${collected} of ${TOTAL}.`}
       </p>
 
-      {/* Top bar: Menu + hard close. */}
+      {/* Top bar: menu only. The macOS chrome owns hard close. */}
       <div
-        className="absolute inset-x-0 top-0 z-20 flex items-center justify-between"
+        className="absolute inset-x-0 top-0 z-20 flex items-center"
         style={{
           paddingTop: "max(0.75rem, env(safe-area-inset-top))",
           paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
@@ -583,14 +582,6 @@ export function GameScene({
         >
           <ArrowLeft size={14} strokeWidth={2} className="transition-transform group-hover/menu:-translate-x-0.5" />
           menu
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close Matthew.exe and return to portfolio"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/45 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
-        >
-          <X size={16} strokeWidth={1.75} />
         </button>
       </div>
 

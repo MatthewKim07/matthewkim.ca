@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { GameScene } from "@/components/game/GameScene";
 import { OverworldTitleBackdrop } from "@/components/game/OverworldTitleBackdrop";
@@ -81,6 +81,7 @@ function ShellContent({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (document.fullscreenElement) return;
         e.preventDefault();
         close();
       }
@@ -153,7 +154,7 @@ function ShellContent({
                 <div className="divide-y divide-white/5">
                   <ControlRow label="move" keys="on-screen d-pad" />
                   <ControlRow label="interact" keys="action button" />
-                  <ControlRow label="exit" keys="close button" />
+                  <ControlRow label="exit" keys="red window button" />
                 </div>
               </div>
               <button
@@ -172,15 +173,6 @@ function ShellContent({
           )}
         </AnimatePresence>
       </div>
-
-      <button
-        type="button"
-        onClick={close}
-        aria-label="Close Matthew.exe and return to portfolio"
-        className="absolute top-5 right-5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
-      >
-        <X size={16} strokeWidth={1.5} />
-      </button>
     </div>
   );
 }
@@ -206,7 +198,7 @@ function OverlayBody({
       dialogRef={dialogRef}
     />
   ) : (
-    <GameScene onMenu={() => setMode("shell")} onClose={close} reduceMotion={reduceMotion} />
+    <GameScene onMenu={() => setMode("shell")} reduceMotion={reduceMotion} />
   );
 }
 
@@ -217,7 +209,9 @@ const clampN = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 export default function GameOverlay() {
   const { isOpen, close } = useGame();
   const reduceMotion = useReducedMotion();
+  const windowRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Draggable / resizable macOS-style window geometry (remembers its place).
   const [win, setWin] = useState(() => {
@@ -232,7 +226,15 @@ export default function GameOverlay() {
     | null
     | { mode: "move" | "resize"; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number }
   >(null);
-  const prevWinRef = useRef<typeof win | null>(null);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === windowRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   // One pair of global listeners; they act only while a drag is in progress.
   useEffect(() => {
@@ -263,21 +265,30 @@ export default function GameOverlay() {
   }, []);
 
   const beginDrag = (mode: "move" | "resize", e: React.PointerEvent) => {
+    if (isFullscreen) return;
     dragRef.current = { mode, sx: e.clientX, sy: e.clientY, ox: win.x, oy: win.y, ow: win.w, oh: win.h };
   };
 
-  const toggleZoom = () => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    if (prevWinRef.current) {
-      setWin(prevWinRef.current);
-      prevWinRef.current = null;
-    } else {
-      prevWinRef.current = win;
-      const w = Math.round(vw * 0.94);
-      const h = Math.round(vh * 0.92);
-      setWin({ w, h, x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2) });
+  const toggleFullscreen = async () => {
+    const gameWindow = windowRef.current;
+    if (!gameWindow) return;
+
+    try {
+      if (document.fullscreenElement === gameWindow) {
+        await document.exitFullscreen();
+      } else {
+        await gameWindow.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen can be blocked by browser or iframe policy.
     }
+  };
+
+  const closeOverlay = () => {
+    if (document.fullscreenElement === windowRef.current) {
+      document.exitFullscreen().catch(() => {});
+    }
+    close();
   };
 
   // Scroll lock + Tab focus trap (mode-agnostic). Esc is handled per mode.
@@ -338,17 +349,23 @@ export default function GameOverlay() {
 
           {/* A draggable, resizable macOS-style window. */}
           <motion.div
+            ref={windowRef}
             initial={reduceMotion ? false : { scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={reduceMotion ? { opacity: 0 } : { scale: 0.98, opacity: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.22, ease: "easeOut" }}
-            className="absolute flex flex-col overflow-hidden rounded-xl bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-black/50"
-            style={{ left: win.x, top: win.y, width: win.w, height: win.h, fontFamily: "var(--font-sf)" }}
+            className={`absolute flex flex-col overflow-hidden bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-black/50 ${
+              isFullscreen ? "rounded-none" : "rounded-xl"
+            }`}
+            style={
+              isFullscreen
+                ? { left: 0, top: 0, width: "100vw", height: "100vh", fontFamily: "var(--font-sf)" }
+                : { left: win.x, top: win.y, width: win.w, height: win.h, fontFamily: "var(--font-sf)" }
+            }
           >
             {/* title bar (drag to move) */}
             <div
               onPointerDown={(e) => beginDrag("move", e)}
-              onDoubleClick={toggleZoom}
               className="relative flex h-8 shrink-0 select-none items-center border-b border-black/40 bg-gradient-to-b from-[#30343d] to-[#272a32] px-3"
               style={{ touchAction: "none" }}
             >
@@ -356,7 +373,7 @@ export default function GameOverlay() {
                 <button
                   type="button"
                   aria-label="Close matthew.exe"
-                  onClick={close}
+                  onClick={closeOverlay}
                   onPointerDown={(e) => e.stopPropagation()}
                   className="relative h-3 w-3 rounded-full bg-[#ff5f57] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
@@ -368,7 +385,12 @@ export default function GameOverlay() {
                     <path d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5" stroke="#5c0000" strokeWidth="1.4" strokeLinecap="round" />
                   </svg>
                 </button>
-                <span aria-hidden className="relative h-3 w-3 rounded-full bg-[#febc2e] ring-1 ring-black/20">
+                <button
+                  type="button"
+                  aria-label="Minimize unavailable"
+                  disabled
+                  className="relative h-3 w-3 cursor-default rounded-full bg-[#febc2e] ring-1 ring-black/20"
+                >
                   <svg
                     viewBox="0 0 12 12"
                     aria-hidden
@@ -376,11 +398,11 @@ export default function GameOverlay() {
                   >
                     <path d="M3 6 H9" stroke="#6b4a00" strokeWidth="1.4" strokeLinecap="round" />
                   </svg>
-                </span>
+                </button>
                 <button
                   type="button"
-                  aria-label="Toggle window size"
-                  onClick={toggleZoom}
+                  aria-label={isFullscreen ? "Exit fullscreen matthew.exe" : "Enter fullscreen matthew.exe"}
+                  onClick={toggleFullscreen}
                   onPointerDown={(e) => e.stopPropagation()}
                   className="relative h-3 w-3 rounded-full bg-[#28c840] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
@@ -403,22 +425,24 @@ export default function GameOverlay() {
             {/* the one and only screen */}
             <div className="relative flex-1 overflow-hidden bg-[#0b0d12] text-white">
               <div ref={dialogRef} tabIndex={-1} className="absolute inset-0 focus:outline-none">
-                <OverlayBody close={close} reduceMotion={!!reduceMotion} dialogRef={dialogRef} />
+                <OverlayBody close={closeOverlay} reduceMotion={!!reduceMotion} dialogRef={dialogRef} />
               </div>
             </div>
 
             {/* resize grip (bottom-right) */}
-            <div
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                beginDrag("resize", e);
-              }}
-              className="absolute bottom-0 right-0 z-40 flex h-5 w-5 cursor-se-resize items-end justify-end p-1"
-              style={{ touchAction: "none" }}
-              aria-hidden
-            >
-              <span className="block h-2.5 w-2.5 border-b-2 border-r-2 border-white/30" />
-            </div>
+            {!isFullscreen && (
+              <div
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  beginDrag("resize", e);
+                }}
+                className="absolute bottom-0 right-0 z-40 flex h-5 w-5 cursor-se-resize items-end justify-end p-1"
+                style={{ touchAction: "none" }}
+                aria-hidden
+              >
+                <span className="block h-2.5 w-2.5 border-b-2 border-r-2 border-white/30" />
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

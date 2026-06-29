@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Clapperboard } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Clapperboard } from "lucide-react";
 import { projects } from "@/data/projects";
 import { sounds } from "@/lib/sounds";
 
@@ -30,11 +30,18 @@ const HIGHLIGHT_COLORS: Record<string, string> = {
 
 function VideoModal({
   src,
+  title,
   onClose,
 }: {
   src: string;
+  title: string;
   onClose: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
+  const windowRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -43,43 +50,129 @@ function VideoModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === windowRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const videoWindow = windowRef.current;
+    if (!videoWindow) return;
+
+    try {
+      if (document.fullscreenElement === videoWindow) {
+        await document.exitFullscreen();
+      } else {
+        await videoWindow.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen can be blocked by the browser or iframe policy.
+    }
+  };
+
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-8 md:p-16"
-      initial={{ opacity: 0 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} demo video`}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none md:p-12"
+      initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/55 backdrop-blur-[3px]" />
 
       <motion.div
-        className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden z-10 shadow-2xl"
-        initial={{ scale: 0.94, opacity: 0 }}
+        ref={windowRef}
+        className="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-black/50"
+        initial={reduceMotion ? false : { scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.94, opacity: 0 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+        exit={reduceMotion ? { opacity: 0 } : { scale: 0.98, opacity: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.22, ease: "easeOut" }}
         onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: "var(--font-sf)" }}
       >
-        <video
-          src={src}
-          autoPlay
-          muted
-          loop
-          playsInline
-          controls
-          className="w-full h-full object-cover"
-        />
-      </motion.div>
+        <div className="relative flex h-8 shrink-0 items-center border-b border-black/40 bg-gradient-to-b from-[#30343d] to-[#272a32] px-3">
+          <div className="group/lights flex items-center gap-2">
+            <button
+              ref={closeButtonRef}
+              type="button"
+              aria-label={`Close ${title} demo video`}
+              onClick={onClose}
+              className="relative h-3 w-3 rounded-full bg-[#ff5f57] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <svg
+                viewBox="0 0 12 12"
+                aria-hidden
+                className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+              >
+                <path d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5" stroke="#5c0000" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Minimize unavailable"
+              disabled
+              className="relative h-3 w-3 cursor-default rounded-full bg-[#febc2e] ring-1 ring-black/20"
+            >
+              <svg
+                viewBox="0 0 12 12"
+                aria-hidden
+                className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+              >
+                <path d="M3 6 H9" stroke="#6b4a00" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label={isFullscreen ? `Exit fullscreen ${title} demo video` : `Enter fullscreen ${title} demo video`}
+              onClick={toggleFullscreen}
+              className="relative h-3 w-3 rounded-full bg-[#28c840] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <svg
+                viewBox="0 0 12 12"
+                aria-hidden
+                className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+                fill="#004d00"
+              >
+                <path d="M2.6 2.6 L7.9 2.6 L2.6 7.9 Z" />
+                <path d="M9.4 9.4 L4.1 9.4 L9.4 4.1 Z" />
+              </svg>
+            </button>
+          </div>
+          <span className="pointer-events-none absolute inset-x-10 truncate text-center text-xs font-medium text-white/55">
+            {title}.demo
+          </span>
+        </div>
 
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-5 z-20 flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-        aria-label="Close video"
-      >
-        <X size={16} strokeWidth={1.5} />
-      </button>
+        <div className="relative aspect-video w-full overflow-hidden bg-black">
+          <video
+            src={src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="h-full w-full object-contain"
+          />
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -193,6 +286,7 @@ function ProjectCard({
           <VideoModal
             key="video-modal"
             src={project.video!}
+            title={project.title}
             onClose={() => setModalOpen(false)}
           />
         )}
