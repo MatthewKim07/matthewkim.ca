@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
-import { renderScene, type PickupEffect, type ShotRender } from "@/game/render";
+import { renderScene, BUBBY_POINT_MS, type BubbyRender, type PickupEffect, type ShotRender } from "@/game/render";
 import { createInput } from "@/game/input";
 import { MOODS, SPAWN_ROOM } from "@/game/scenes/spawnRoom";
 import type { Dialogue, SceneObject } from "@/game/types";
@@ -20,6 +20,33 @@ function findObject(id: string | null): SceneObject | undefined {
 
 // Basketball mini-game tuning.
 const SHOOT_MS = 650;
+
+// Bubby helper tuning.
+const BUBBY_SPEED = 60; // world px/sec
+interface BubbyState extends BubbyRender {
+  homeX: number;
+  homeY: number;
+  targetX: number;
+  targetY: number;
+}
+const BUBBY_BED = SPAWN_ROOM.objects.find((o) => o.kind === "bubbybed")!;
+const BUBBY_HOME = {
+  x: BUBBY_BED.rect.x + BUBBY_BED.rect.w / 2,
+  y: BUBBY_BED.rect.y + BUBBY_BED.rect.h / 2 + 1,
+};
+function restingBubby(): BubbyState {
+  return {
+    phase: "resting",
+    x: BUBBY_HOME.x,
+    y: BUBBY_HOME.y,
+    homeX: BUBBY_HOME.x,
+    homeY: BUBBY_HOME.y,
+    targetX: BUBBY_HOME.x,
+    targetY: BUBBY_HOME.y,
+    facing: "down",
+    start: 0,
+  };
+}
 
 type ShotState =
   | { phase: "aim"; marker: number; dir: number }
@@ -92,6 +119,10 @@ export function GameScene({
   }, [mood]);
 
   const [promptPlay, setPromptPlay] = useState(false);
+  const [promptPet, setPromptPet] = useState(false);
+
+  // Bubby state (host-driven; no React re-render per frame).
+  const bubbyRef = useRef<BubbyState>(restingBubby());
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -118,6 +149,77 @@ export function GameScene({
     [showToast]
   );
 
+  // Pet Bubby: he wakes and trots out to point at the nearest uncollected thing
+  // (or the door once everything's gathered), then returns to his bed. No
+  // pathfinding — a short scripted lerp toward the target.
+  const petBubby = useCallback(() => {
+    const st = stateRef.current;
+    if (!st) return;
+    // ignore if he's already mid-sequence
+    if (bubbyRef.current.phase !== "resting") return;
+
+    const hx = BUBBY_HOME.x;
+    const hy = BUBBY_HOME.y;
+    const uncollected = st.fragments.filter((f) => !f.collected);
+    let tx = hx;
+    let ty = hy;
+    let cue = "[tail wag]";
+    if (uncollected.length) {
+      let best = Infinity;
+      for (const f of uncollected) {
+        const d = (f.x - hx) ** 2 + (f.y - hy) ** 2;
+        if (d < best) {
+          best = d;
+          tx = f.x;
+          ty = f.y + 8; // stop just in front of it
+        }
+      }
+      cue = "[here]";
+    } else {
+      const door = SPAWN_ROOM.objects.find((o) => o.kind === "door");
+      if (door) {
+        tx = door.rect.x + door.rect.w / 2;
+        ty = door.rect.y - 8;
+        cue = "[let's go]";
+      }
+    }
+
+    if (reduceMotion) {
+      // no trotting: point from the bed, then settle.
+      let facing: BubbyRender["facing"] = "down";
+      const dx = tx - hx;
+      const dy = ty - hy;
+      if (Math.abs(dx) > Math.abs(dy)) facing = dx > 0 ? "right" : "left";
+      else facing = dy > 0 ? "down" : "up";
+      bubbyRef.current = {
+        phase: "pointing",
+        x: hx,
+        y: hy,
+        homeX: hx,
+        homeY: hy,
+        targetX: tx,
+        targetY: ty,
+        facing,
+        cue,
+        start: performance.now(),
+      };
+      return;
+    }
+
+    bubbyRef.current = {
+      phase: "waking",
+      x: hx,
+      y: hy,
+      homeX: hx,
+      homeY: hy,
+      targetX: tx,
+      targetY: ty,
+      facing: "down",
+      cue,
+      start: performance.now(),
+    };
+  }, [reduceMotion]);
+
   // E/Action at the hoop (with the ball collected) starts the timing shot;
   // otherwise interact normally.
   const tryInteract = useCallback(() => {
@@ -131,6 +233,10 @@ export function GameScene({
         setAiming(true);
         return;
       }
+    }
+    if (obj.kind === "bubbybed") {
+      petBubby();
+      return;
     }
     if (obj.kind === "recordplayer") {
       const hasRecord = stateRef.current?.fragments.find((f) => f.id === "record")?.collected;
@@ -147,7 +253,7 @@ export function GameScene({
     const d =
       stateRef.current?.gatePowered && obj.poweredDialogue ? obj.poweredDialogue : obj.interact.dialogue;
     openDialogue(d);
-  }, [openDialogue]);
+  }, [openDialogue, petBubby]);
 
   const flipMood = useCallback((delta: number) => {
     setMoodIndex((i) => (i + delta + MOODS.length) % MOODS.length);
@@ -267,6 +373,50 @@ export function GameScene({
         if (now - shot.start >= SHOOT_MS) finishShot(shot.result === "make", shot.text);
       }
 
+      // Bubby scripted helper: waking -> trotting -> pointing -> returning.
+      const b = bubbyRef.current;
+      if (b.phase === "waking") {
+        if (now - b.start > 280) {
+          b.phase = "trotting";
+          b.start = now;
+        }
+      } else if (b.phase === "trotting" || b.phase === "returning") {
+        const tx = b.phase === "trotting" ? b.targetX : b.homeX;
+        const ty = b.phase === "trotting" ? b.targetY : b.homeY;
+        const ddx = tx - b.x;
+        const ddy = ty - b.y;
+        const dd = Math.hypot(ddx, ddy);
+        if (dd <= 1.5) {
+          if (b.phase === "trotting") {
+            b.phase = "pointing";
+            b.start = now;
+            // look back at the player
+            const px = state.player.x + state.player.w / 2;
+            const py = state.player.y + state.player.h / 2;
+            const fdx = px - b.x;
+            const fdy = py - b.y;
+            b.facing = Math.abs(fdx) > Math.abs(fdy) ? (fdx > 0 ? "right" : "left") : fdy > 0 ? "down" : "up";
+          } else {
+            bubbyRef.current = restingBubby();
+          }
+        } else {
+          const stp = Math.min(dd, BUBBY_SPEED * dt);
+          b.x += (ddx / dd) * stp;
+          b.y += (ddy / dd) * stp;
+          b.facing = Math.abs(ddx) > Math.abs(ddy) ? (ddx > 0 ? "right" : "left") : ddy > 0 ? "down" : "up";
+        }
+      } else if (b.phase === "pointing") {
+        if (now - b.start > BUBBY_POINT_MS) {
+          if (reduceMotion) {
+            bubbyRef.current = restingBubby();
+          } else {
+            b.phase = "returning";
+            b.start = now;
+            b.cue = undefined;
+          }
+        }
+      }
+
       // Drain discrete events from this frame (collection / completion).
       if (state.events.length) {
         for (const e of state.events) {
@@ -308,14 +458,17 @@ export function GameScene({
       const isPlayRecord =
         state.nearestId === "recordplayer" &&
         !!state.fragments.find((f) => f.id === "record")?.collected;
+      const isPetBubby = state.nearestId === "bubbybed";
       if (showPrompt !== prompt) {
         prompt = showPrompt;
         setHasPrompt(showPrompt);
         setPromptShoot(showPrompt && isShootHoop);
         setPromptPlay(showPrompt && isPlayRecord);
+        setPromptPet(showPrompt && isPetBubby);
       } else if (showPrompt) {
         setPromptShoot(isShootHoop);
         setPromptPlay(isPlayRecord);
+        setPromptPet(isPetBubby);
       }
 
       let shotRender: ShotRender | null = null;
@@ -338,6 +491,7 @@ export function GameScene({
         effects: effectsRef.current,
         shot: shotRender,
         mood: moodRef.current,
+        bubby: bubbyRef.current,
       });
       raf = requestAnimationFrame(tick);
     };
@@ -513,6 +667,8 @@ export function GameScene({
                   "tap to shoot"
                 ) : promptPlay ? (
                   "tap to play"
+                ) : promptPet ? (
+                  "tap to pet"
                 ) : (
                   "tap to interact"
                 )
@@ -524,7 +680,7 @@ export function GameScene({
                   >
                     E
                   </kbd>
-                  {promptShoot ? "shoot" : promptPlay ? "play" : "interact"}
+                  {promptShoot ? "shoot" : promptPlay ? "play" : promptPet ? "pet" : "interact"}
                 </>
               )}
             </span>
@@ -742,37 +898,34 @@ function DialogueBox({
     btnRef.current?.focus();
   }, []);
 
+  // Retro handheld-RPG dialogue panel: cream box with a strong inner border,
+  // dark readable text, sitting inside the bottom of the single game screen.
   return (
     <div
       role="dialog"
       aria-label={dialogue.title ?? "Dialogue"}
-      className="absolute inset-x-0 bottom-0 z-30 border-t border-white/10 bg-gray-900/95 backdrop-blur-sm"
-      style={{
-        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
-        paddingLeft: "max(1.25rem, env(safe-area-inset-left))",
-        paddingRight: "max(1.25rem, env(safe-area-inset-right))",
-        paddingTop: "1rem",
-        fontFamily: "var(--font-sf)",
-      }}
+      className="absolute inset-x-1.5 bottom-1.5 z-30 rounded-[5px] border-2 border-[#2c2418] bg-[#f4ecd6]"
+      style={{ fontFamily: "var(--font-sf)", boxShadow: "0 3px 0 rgba(0,0,0,0.35)" }}
     >
-      <div className="mx-auto flex max-w-lg flex-col gap-3">
+      <div className="rounded-[2px] border border-[#b9ad8c] m-1 px-3 py-2.5">
         {dialogue.title && (
-          <p className="text-[0.7rem] tracking-[0.15em] text-[#FED34C]">
-            {dialogue.title}
-          </p>
+          <p className="text-[0.62rem] uppercase tracking-[0.18em] text-[#9a6a2f]">{dialogue.title}</p>
         )}
-        <p aria-live="polite" className="min-h-[3rem] text-sm leading-relaxed text-white/85">
+        <p
+          aria-live="polite"
+          className="mt-1 min-h-[2.6rem] text-[0.82rem] leading-snug text-[#2c2418]"
+        >
           {dialogue.lines[line]}
         </p>
-        <div className="flex items-center justify-between">
-          <span className="text-[0.6rem] tracking-[0.2em] text-white/30">
+        <div className="mt-1.5 flex items-center justify-between">
+          <span className="text-[0.55rem] tracking-[0.15em] text-[#9a8f6f]">
             {line + 1} / {dialogue.lines.length}
           </span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md px-3 py-1.5 text-xs text-white/50 transition-colors hover:text-white/80 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+              className="rounded-sm px-2.5 py-1 text-[0.7rem] text-[#7a6f54] transition-colors hover:text-[#2c2418] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#9a6a2f]"
             >
               close
             </button>
@@ -780,9 +933,9 @@ function DialogueBox({
               ref={btnRef}
               type="button"
               onClick={onAdvance}
-              className="rounded-md bg-[#FED34C] px-4 py-1.5 text-xs font-medium text-gray-950 transition-colors hover:bg-[#ffdf73] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FED34C]"
+              className="rounded-sm border-2 border-[#2c2418] bg-[#2c2418] px-3 py-1 text-[0.7rem] font-medium text-[#f4ecd6] transition-colors hover:bg-[#42361f] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#2c2418]"
             >
-              {isLast ? "close" : "continue"}
+              {isLast ? "close ▸" : "next ▸"}
             </button>
           </div>
         </div>

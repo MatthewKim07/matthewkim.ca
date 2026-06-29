@@ -125,7 +125,7 @@ function ShellContent({
           {view === "menu" && (
             <motion.div key="menu" {...panelMotion} className="flex flex-col items-center text-center">
               <h2
-                className="text-5xl font-semibold tracking-tight md:text-6xl"
+                className="text-4xl font-semibold tracking-tight md:text-5xl"
                 style={{ textShadow: "0 1px 24px rgba(0,0,0,0.5)" }}
               >
                 matthew.exe
@@ -136,18 +136,6 @@ function ShellContent({
                 </MenuLink>
                 <MenuLink onClick={() => setView("controls")}>controls</MenuLink>
               </div>
-              <button
-                type="button"
-                onClick={close}
-                className="group/exit mt-10 inline-flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/80 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
-              >
-                <ArrowLeft
-                  size={13}
-                  strokeWidth={1.75}
-                  className="transition-transform group-hover/exit:-translate-x-0.5"
-                />
-                back to portfolio
-              </button>
             </motion.div>
           )}
 
@@ -222,10 +210,75 @@ function OverlayBody({
   );
 }
 
+const WIN_MIN_W = 380;
+const WIN_MIN_H = 320;
+const clampN = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
 export default function GameOverlay() {
   const { isOpen, close } = useGame();
   const reduceMotion = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Draggable / resizable macOS-style window geometry (remembers its place).
+  const [win, setWin] = useState(() => {
+    if (typeof window === "undefined") return { x: 0, y: 0, w: 860, h: 640 };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const w = Math.min(860, vw * 0.92);
+    const h = Math.min(640, vh * 0.9);
+    return { w, h, x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2) };
+  });
+  const dragRef = useRef<
+    | null
+    | { mode: "move" | "resize"; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number }
+  >(null);
+  const prevWinRef = useRef<typeof win | null>(null);
+
+  // One pair of global listeners; they act only while a drag is in progress.
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (d.mode === "move") {
+        const x = clampN(d.ox + (e.clientX - d.sx), -d.ow + 120, vw - 120);
+        const y = clampN(d.oy + (e.clientY - d.sy), 0, vh - 44);
+        setWin((p) => ({ ...p, x, y }));
+      } else {
+        const w = clampN(d.ow + (e.clientX - d.sx), WIN_MIN_W, vw * 0.97);
+        const h = clampN(d.oh + (e.clientY - d.sy), WIN_MIN_H, vh * 0.95);
+        setWin((p) => ({ ...p, w, h }));
+      }
+    };
+    const up = () => {
+      dragRef.current = null;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+  }, []);
+
+  const beginDrag = (mode: "move" | "resize", e: React.PointerEvent) => {
+    dragRef.current = { mode, sx: e.clientX, sy: e.clientY, ox: win.x, oy: win.y, ow: win.w, oh: win.h };
+  };
+
+  const toggleZoom = () => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (prevWinRef.current) {
+      setWin(prevWinRef.current);
+      prevWinRef.current = null;
+    } else {
+      prevWinRef.current = win;
+      const w = Math.round(vw * 0.94);
+      const h = Math.round(vh * 0.92);
+      setWin({ w, h, x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2) });
+    }
+  };
 
   // Scroll lock + Tab focus trap (mode-agnostic). Esc is handled per mode.
   useEffect(() => {
@@ -267,19 +320,106 @@ export default function GameOverlay() {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-label="Matthew.exe"
-          tabIndex={-1}
+          aria-label="matthew.exe"
           initial={false}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.25, ease: "easeOut" }}
-          className="fixed inset-0 z-50 overflow-hidden bg-gray-950 text-white select-none focus:outline-none"
-          style={{ fontFamily: "var(--font-sf)" }}
+          transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
+          className="fixed inset-0 z-50 flex items-center justify-center select-none"
+          style={{
+            padding:
+              "max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))",
+          }}
         >
-          <OverlayBody close={close} reduceMotion={!!reduceMotion} dialogRef={dialogRef} />
+          {/* The portfolio stays visible behind: dimmed + lightly blurred. */}
+          <div aria-hidden className="absolute inset-0 bg-black/55 backdrop-blur-[3px]" />
+
+          {/* A draggable, resizable macOS-style window. */}
+          <motion.div
+            initial={reduceMotion ? false : { scale: 0.98, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { scale: 0.98, opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.22, ease: "easeOut" }}
+            className="absolute flex flex-col overflow-hidden rounded-xl bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-black/50"
+            style={{ left: win.x, top: win.y, width: win.w, height: win.h, fontFamily: "var(--font-sf)" }}
+          >
+            {/* title bar (drag to move) */}
+            <div
+              onPointerDown={(e) => beginDrag("move", e)}
+              onDoubleClick={toggleZoom}
+              className="relative flex h-8 shrink-0 select-none items-center border-b border-black/40 bg-gradient-to-b from-[#30343d] to-[#272a32] px-3"
+              style={{ touchAction: "none" }}
+            >
+              <div className="group/lights flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Close matthew.exe"
+                  onClick={close}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="relative h-3 w-3 rounded-full bg-[#ff5f57] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                >
+                  <svg
+                    viewBox="0 0 12 12"
+                    aria-hidden
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+                  >
+                    <path d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5" stroke="#5c0000" strokeWidth="1.4" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <span aria-hidden className="relative h-3 w-3 rounded-full bg-[#febc2e] ring-1 ring-black/20">
+                  <svg
+                    viewBox="0 0 12 12"
+                    aria-hidden
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+                  >
+                    <path d="M3 6 H9" stroke="#6b4a00" strokeWidth="1.4" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <button
+                  type="button"
+                  aria-label="Toggle window size"
+                  onClick={toggleZoom}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="relative h-3 w-3 rounded-full bg-[#28c840] ring-1 ring-black/20 transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                >
+                  <svg
+                    viewBox="0 0 12 12"
+                    aria-hidden
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover/lights:opacity-100"
+                    fill="#004d00"
+                  >
+                    <path d="M2.6 2.6 L7.9 2.6 L2.6 7.9 Z" />
+                    <path d="M9.4 9.4 L4.1 9.4 L9.4 4.1 Z" />
+                  </svg>
+                </button>
+              </div>
+              <span className="pointer-events-none absolute inset-x-0 text-center text-xs font-medium text-white/55">
+                matthew.exe
+              </span>
+            </div>
+
+            {/* the one and only screen */}
+            <div className="relative flex-1 overflow-hidden bg-[#0b0d12] text-white">
+              <div ref={dialogRef} tabIndex={-1} className="absolute inset-0 focus:outline-none">
+                <OverlayBody close={close} reduceMotion={!!reduceMotion} dialogRef={dialogRef} />
+              </div>
+            </div>
+
+            {/* resize grip (bottom-right) */}
+            <div
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                beginDrag("resize", e);
+              }}
+              className="absolute bottom-0 right-0 z-40 flex h-5 w-5 cursor-se-resize items-end justify-end p-1"
+              style={{ touchAction: "none" }}
+              aria-hidden
+            >
+              <span className="block h-2.5 w-2.5 border-b-2 border-r-2 border-white/30" />
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

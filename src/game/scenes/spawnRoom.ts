@@ -150,9 +150,11 @@ export const SPAWN_ROOM: Scene = {
       rect: { x: 198, y: 150, w: 32, h: 20 },
       interact: {
         zone: { x: 196, y: 134, w: 36, h: 16 },
+        // Petting is handled in the host (a reaction, not a dialogue box); this
+        // line is only a fallback and normally isn't shown.
         dialogue: {
-          title: "bubby's bed",
-          lines: ["bubby's bed, still warm. he was just here."],
+          title: "bubby",
+          lines: ["bubby's curled up, fast asleep."],
         },
       },
     },

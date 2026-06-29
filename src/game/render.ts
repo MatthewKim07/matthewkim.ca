@@ -56,6 +56,13 @@ const C = {
   book2: "#b5563f",
   book3: "#4a7d57",
   book4: "#caa42f",
+  // bubby (small black toy poodle)
+  bubbyCoat: "#2d2a33",
+  bubbyFluff: "#3b3743",
+  bubbyOutline: "#15131a",
+  bubbyMuzzle: "#46424e",
+  bubbyEye: "#d8d2e0",
+  bubbyNose: "#0c0b10",
   // player
   pOut: "#23190f",
   skin: "#ecbd92",
@@ -85,6 +92,18 @@ export interface ShotRender {
   progress?: number; // 0..1 during shoot
 }
 
+// Bubby render state (host-driven). x/y are his current world position.
+export interface BubbyRender {
+  phase: "resting" | "waking" | "trotting" | "pointing" | "returning";
+  x: number;
+  y: number;
+  facing: "up" | "down" | "left" | "right";
+  start: number;
+  cue?: string;
+}
+
+export const BUBBY_POINT_MS = 1500;
+
 export interface RenderOptions {
   reduceMotion: boolean;
   dpr: number;
@@ -93,6 +112,7 @@ export interface RenderOptions {
   shot?: ShotRender | null;
   /** Currently playing mood id (record player), or null. */
   mood?: string | null;
+  bubby?: BubbyRender | null;
   camera?: Vec2;
 }
 
@@ -100,6 +120,29 @@ function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
+
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
+function noise(x: number, y: number) {
+  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+// Flat / wall-mounted decor + floor cushions — drawn behind the actors so they
+// never occlude the player or Bubby. Tall props (bed, desk, bookshelf, record
+// player, vinyl crate, plant, door) depth-sort with the actors by foot Y.
+const BACKGROUND_KINDS = new Set<SceneObject["kind"]>([
+  "window",
+  "stringlights",
+  "poster",
+  "clock",
+  "lamp",
+  "corkboard",
+  "snackshelf",
+  "hoop",
+  "bubbybed",
+  "beanbag",
+]);
 
 function block(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) {
   ctx.fillStyle = C.outline;
@@ -147,15 +190,30 @@ export function renderScene(
   drawWalls(ctx, scene.width, scene.height);
   if (state.gatePowered) drawDoorSpill(ctx, scene, time);
 
-  // Depth sort objects, fragments, player by foot Y.
+  // Flat / wall-mounted decor + floor cushions: always behind the actors so the
+  // player and Bubby never get covered by something they're standing in front of
+  // (or lying on). Everything else depth-sorts by foot Y.
+  for (const o of scene.objects) {
+    if (BACKGROUND_KINDS.has(o.kind)) drawObject(ctx, o, time);
+  }
+
   type Drawable = { y: number; draw: () => void };
-  const drawables: Drawable[] = scene.objects.map((o) => ({
-    y: o.rect.y + o.rect.h,
-    draw: () => drawObject(ctx, o, time, o.kind === "door" && state.gatePowered),
-  }));
+  const drawables: Drawable[] = scene.objects
+    .filter((o) => !BACKGROUND_KINDS.has(o.kind))
+    .map((o) => ({
+      y: o.rect.y + o.rect.h,
+      draw: () => drawObject(ctx, o, time, o.kind === "door" && state.gatePowered),
+    }));
   for (const frag of state.fragments) {
     if (frag.collected) continue;
     drawables.push({ y: frag.y, draw: () => drawFragment(ctx, frag, time, opts.reduceMotion) });
+  }
+  const bed = scene.objects.find((o) => o.kind === "bubbybed");
+  if (bed) {
+    const home = { x: bed.rect.x + bed.rect.w / 2, y: bed.rect.y + bed.rect.h / 2 + 1 };
+    const b: BubbyRender =
+      opts.bubby ?? { phase: "resting", x: home.x, y: home.y, facing: "down", start: 0 };
+    drawables.push({ y: b.y + 5, draw: () => drawBubby(ctx, b, time, opts.reduceMotion) });
   }
   drawables.push({
     y: state.player.y + state.player.h,
@@ -710,11 +768,9 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number,
       ctx.beginPath();
       ctx.ellipse(r.x + r.w / 2, r.y + r.h / 2, r.w / 2 - 5, r.h / 2 - 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      // bone toy
+      // a small chew toy peeking out beside the bed
       ctx.fillStyle = C.cream;
-      ctx.fillRect(r.x + r.w / 2 - 4, r.y + r.h / 2 - 1, 8, 2);
-      ctx.fillRect(r.x + r.w / 2 - 5, r.y + r.h / 2 - 2, 2, 4);
-      ctx.fillRect(r.x + r.w / 2 + 3, r.y + r.h / 2 - 2, 2, 4);
+      ctx.fillRect(r.x + r.w - 3, r.y + r.h - 4, 5, 2);
       break;
     }
     case "plant": {
@@ -915,6 +971,192 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, reduceMotion:
     ctx.fillStyle = C.accent;
     ctx.fillRect(x + 1, y + 4, 2, 3);
     ctx.fillRect(x + SW - 3, y + 4, 2, 3);
+  }
+}
+
+function drawBubbyCue(ctx: CanvasRenderingContext2D, cx: number, cy: number, text: string, a: number) {
+  if (a <= 0) return;
+  ctx.font = "6px sans-serif";
+  const w = ctx.measureText(text).width + 6;
+  ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(20,15,10,0.72)";
+  ctx.fillRect(cx - w / 2, cy - 7, w, 9);
+  ctx.fillStyle = C.accent;
+  ctx.textAlign = "center";
+  ctx.fillText(text, cx, cy);
+  ctx.textAlign = "left";
+  ctx.globalAlpha = 1;
+}
+
+function disc(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, col: string) {
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Curl texture: scatter little fluff circles in two tones to read as a curly
+// coat. Deterministic so it doesn't shimmer.
+function curls(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  hi: string,
+  lo: string,
+  seed: number
+) {
+  for (let i = 0; i < 9; i++) {
+    const a = noise(seed + i, seed - i);
+    const b = noise(seed - i * 2, seed + i * 3);
+    const px = cx + (a - 0.5) * rx * 2;
+    const py = cy + (b - 0.5) * ry * 2;
+    disc(ctx, px, py, 1.4, (i + seed) % 2 ? hi : lo);
+  }
+}
+
+// Bubby: a fluffy black toy poodle, drawn from a soft 3/4 angle so his face
+// reads. Rests on his bed; trots out to point at things when petted.
+function drawBubby(ctx: CanvasRenderingContext2D, bubby: BubbyRender, time: number, reduceMotion: boolean) {
+  const moving = bubby.phase === "trotting" || bubby.phase === "returning";
+  const resting = bubby.phase === "resting";
+  const happy = bubby.phase === "pointing" || bubby.phase === "waking" || moving;
+  const f = bubby.facing;
+
+  const COAT = "#211f28";
+  const COAT_HI = "#34313e";
+  const COAT_SH = "#131119";
+  const OUT = "#0c0b11";
+  const NOSE = "#070608";
+  const TONGUE = "#e07690";
+  const TONGUE_SH = "#c25e76";
+
+  let oy = 0;
+  if (!reduceMotion) {
+    if (moving) oy = -Math.abs(Math.sin(time / 90)) * 2;
+    else if (resting) oy = Math.sin(time / 620);
+  }
+  const bx = Math.round(bubby.x);
+  const by = Math.round(bubby.y + oy);
+
+  shadow(ctx, bubby.x, bubby.y + 6, 6, 2);
+
+  // --- fluffy legs + paws ---
+  if (!resting) {
+    const step = moving && !reduceMotion ? (Math.sin(time / 90) > 0 ? 1 : 0) : 0;
+    const legs = [-4, -1.3, 1.3, 4];
+    for (let i = 0; i < legs.length; i++) {
+      const lx = bx + legs[i];
+      const lift = i % 2 === 0 ? step : 1 - step;
+      disc(ctx, lx, by + 4, 1.7, OUT);
+      disc(ctx, lx, by + 4, 1.2, COAT);
+      disc(ctx, lx, by + 6 - lift, 1.6, OUT); // paw tuft
+      disc(ctx, lx, by + 6 - lift, 1.1, COAT);
+    }
+  }
+
+  // --- slim fluffy tail (raised, wags) ---
+  const wag = !reduceMotion && (happy || moving) ? Math.sin(time / 60) * 2.5 : 0;
+  const tx = bx - 5;
+  const ty = by - 5 + wag;
+  disc(ctx, tx, ty, 2.2, OUT);
+  disc(ctx, tx, ty, 1.5, COAT);
+  curls(ctx, tx, ty, 1.2, 1.8, COAT_HI, COAT_SH, 7);
+
+  // --- body (compact + fluffy, sits over the legs) ---
+  ctx.fillStyle = OUT;
+  ctx.beginPath();
+  ctx.ellipse(bx, by + 1, 6, 4.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COAT;
+  ctx.beginPath();
+  ctx.ellipse(bx, by + 1, 5, 3.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COAT_SH;
+  ctx.beginPath();
+  ctx.ellipse(bx, by + 2.4, 4, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  curls(ctx, bx, by + 1, 4.5, 3, COAT_HI, COAT_SH, 3);
+
+  // --- head + tucked curly ears ---
+  const hx = bx + (f === "left" ? -1.5 : f === "right" ? 1.5 : 0);
+  const hy = by - 5;
+  for (const side of [-1, 1]) {
+    const ex = hx + side * 4.2;
+    disc(ctx, ex, hy + 2, 2.2, OUT);
+    disc(ctx, ex, hy + 2, 1.6, COAT);
+    disc(ctx, ex - side * 0.5, hy + 4.5, 1.8, OUT);
+    disc(ctx, ex - side * 0.5, hy + 4.5, 1.3, COAT);
+    curls(ctx, ex, hy + 3, 1, 2, COAT_HI, COAT_SH, side === 1 ? 11 : 17);
+  }
+  disc(ctx, hx, hy, 4.5, OUT);
+  disc(ctx, hx, hy, 3.6, COAT);
+  // small topknot fluff
+  disc(ctx, hx - 1.4, hy - 3.4, 1.6, OUT);
+  disc(ctx, hx + 1.4, hy - 3.4, 1.6, OUT);
+  disc(ctx, hx - 1.4, hy - 3.4, 1.1, COAT_HI);
+  disc(ctx, hx + 1.4, hy - 3.4, 1.1, COAT);
+  curls(ctx, hx, hy - 1, 3.2, 2.6, COAT_HI, COAT_SH, 23);
+
+  // --- face ---
+  if (f !== "up") {
+    const eo = f === "left" ? -1 : f === "right" ? 1 : 0;
+    const ex1 = hx - 1.8 + eo;
+    const ex2 = hx + 1.8 + eo;
+    const ey = hy - 0.3;
+    if (resting) {
+      // closed, sleeping eyes — tiny dark lash dashes
+      ctx.fillStyle = COAT_SH;
+      ctx.fillRect(Math.round(ex1) - 1, Math.round(ey), 2, 1);
+      ctx.fillRect(Math.round(ex2) - 1, Math.round(ey), 2, 1);
+    } else {
+      // simple flat shiny-dot eyes (a soft socket + a 1px glint), no white sclera
+      ctx.fillStyle = COAT_SH;
+      ctx.fillRect(Math.round(ex1) - 1, Math.round(ey) - 1, 2, 2);
+      ctx.fillRect(Math.round(ex2) - 1, Math.round(ey) - 1, 2, 2);
+      ctx.fillStyle = "#aeb4c2";
+      ctx.fillRect(Math.round(ex1), Math.round(ey) - 1, 1, 1);
+      ctx.fillRect(Math.round(ex2), Math.round(ey) - 1, 1, 1);
+    }
+    // muzzle + shiny nose
+    const mx = hx + eo * 0.5;
+    const my = hy + 2;
+    disc(ctx, mx, my - 0.4, 1.7, COAT_HI);
+    disc(ctx, mx, my, 1.1, NOSE);
+    ctx.fillStyle = "#5b5866";
+    ctx.fillRect(Math.round(mx) - 1, Math.round(my) - 1, 1, 1);
+    // happy pink tongue
+    if (happy) {
+      ctx.fillStyle = TONGUE;
+      ctx.fillRect(Math.round(mx) - 1, Math.round(my) + 1, 2, 2);
+      ctx.fillStyle = TONGUE_SH;
+      ctx.fillRect(Math.round(mx), Math.round(my) + 2, 1, 1);
+    }
+  } else {
+    // facing away: just fluff
+    curls(ctx, hx, hy, 3, 2.4, COAT_HI, COAT_SH, 29);
+  }
+
+  // accent collar peeking under the chin
+  ctx.fillStyle = C.accent;
+  ctx.fillRect(hx - 2, hy + 3, 4, 1);
+  ctx.fillStyle = C.accentDk;
+  ctx.fillRect(hx, hy + 3, 1, 1);
+
+  // sleepy "z" while resting
+  if (resting && !reduceMotion) {
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "6px sans-serif";
+    ctx.fillText("z", bx + 8, by - 9 + Math.round(Math.sin(time / 500)));
+    ctx.globalAlpha = 1;
+  }
+
+  if (bubby.phase === "pointing" && bubby.cue) {
+    const t = clamp((time - bubby.start) / BUBBY_POINT_MS, 0, 1);
+    const a = reduceMotion ? 1 : Math.sin(t * Math.PI);
+    drawBubbyCue(ctx, bubby.x, bubby.y - 13, bubby.cue, a);
   }
 }
 
