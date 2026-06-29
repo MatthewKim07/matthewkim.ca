@@ -5,6 +5,7 @@ import { MusicProvider } from "@/context/MusicContext";
 import { PersistentMusicPlayer } from "@/components/PersistentMusicPlayer";
 import { TravelProvider } from "@/context/TravelContext";
 import { TravelOverlay } from "@/components/travel/TravelOverlay";
+import { DarkModeCursor } from "@/components/DarkModeCursor";
 
 export function ClientRoot({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export function ClientRoot({ children }: { children: React.ReactNode }) {
       <MusicProvider>
         <TravelProvider>
           {children}
+          <DarkModeCursor />
           <PersistentMusicPlayer />
           <TravelOverlay />
         </TravelProvider>

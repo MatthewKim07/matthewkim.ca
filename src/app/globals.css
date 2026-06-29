@@ -33,3 +33,17 @@ body {
 a, button, [role="button"] {
   cursor: pointer !important;
 }
+
+/*
+ * Dark mode uses an animated glitter cursor. JS cycles the --dark-cursor frame
+ * on <html>; the custom property inherits to every element, so these rules
+ * (more specific than the global `*` above) win in dark mode. With no JS the
+ * fallback keyword keeps a normal cursor.
+ */
+.dark * {
+  cursor: var(--dark-cursor, default) !important;
+}
+
+.dark a, .dark button, .dark [role="button"] {
+  cursor: var(--dark-cursor, pointer) !important;
+}
