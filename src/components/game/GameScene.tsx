@@ -174,24 +174,26 @@ export function GameScene({
         <button
           type="button"
           onClick={onMenu}
-          className="rounded-md border border-white/15 px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.2em] text-white/70 transition-colors hover:border-white/40 hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+          style={{ textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}
+          className="group/menu inline-flex items-center gap-1.5 text-sm font-medium text-white/90 transition-colors hover:text-[#FED34C] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70"
         >
-          Menu
+          <ArrowLeft size={14} strokeWidth={2} className="transition-transform group-hover/menu:-translate-x-0.5" />
+          menu
         </button>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close Overworld and return to portfolio"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+          aria-label="Close Matthew.exe and return to portfolio"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/45 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
         >
-          <X size={16} strokeWidth={1.5} />
+          <X size={16} strokeWidth={1.75} />
         </button>
       </div>
 
       {/* Proximity prompt. */}
       {hasPrompt && !dialogue && (
-        <p className="pointer-events-none absolute inset-x-0 bottom-24 z-10 text-center text-[0.7rem] uppercase tracking-[0.25em] text-[#FED34C]">
-          {isTouch ? "Tap the button" : "Press E"}
+        <p className="pointer-events-none absolute inset-x-0 bottom-24 z-10 text-center text-[0.7rem] tracking-[0.15em] text-[#FED34C]">
+          {isTouch ? "tap the button" : "press E"}
         </p>
       )}
 
@@ -308,7 +310,7 @@ function DialogueBox({
     >
       <div className="mx-auto flex max-w-lg flex-col gap-3">
         {dialogue.title && (
-          <p className="text-[0.65rem] uppercase tracking-[0.3em] text-[#FED34C]">
+          <p className="text-[0.7rem] tracking-[0.15em] text-[#FED34C]">
             {dialogue.title}
           </p>
         )}
@@ -316,7 +318,7 @@ function DialogueBox({
           {dialogue.lines[line]}
         </p>
         <div className="flex items-center justify-between">
-          <span className="text-[0.6rem] uppercase tracking-[0.25em] text-white/30">
+          <span className="text-[0.6rem] tracking-[0.2em] text-white/30">
             {line + 1} / {dialogue.lines.length}
           </span>
           <div className="flex gap-2">
@@ -325,7 +327,7 @@ function DialogueBox({
               onClick={onClose}
               className="rounded-md px-3 py-1.5 text-xs text-white/50 transition-colors hover:text-white/80 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
             >
-              Close
+              close
             </button>
             <button
               ref={btnRef}
@@ -333,7 +335,7 @@ function DialogueBox({
               onClick={onAdvance}
               className="rounded-md bg-[#FED34C] px-4 py-1.5 text-xs font-medium text-gray-950 transition-colors hover:bg-[#ffdf73] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FED34C]"
             >
-              {isLast ? "Close" : "Continue"}
+              {isLast ? "close" : "continue"}
             </button>
           </div>
         </div>

@@ -33,7 +33,7 @@ export function MatthewTrigger({ children }: { children: React.ReactNode }) {
       ref={ref}
       type="button"
       data-no-trail
-      aria-label="Enter Overworld"
+      aria-label="Enter Matthew.exe"
       onClick={open}
       // Inherit all type styling so the title looks visually unchanged at rest.
       style={{ font: "inherit", letterSpacing: "inherit", color: "inherit" }}

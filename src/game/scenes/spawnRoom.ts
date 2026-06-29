@@ -49,7 +49,7 @@ export const SPAWN_ROOM: Scene = {
       interact: {
         zone: { x: 42, y: 114, w: 54, h: 24 },
         dialogue: {
-          title: "Workbench",
+          title: "workbench",
           lines: [
             "The terminal on the workbench is still humming.",
             "Most of what I make starts right here. Small tools, robots, half-ideas that grow into real ones.",
@@ -68,7 +68,7 @@ export const SPAWN_ROOM: Scene = {
       interact: {
         zone: { x: 138, y: 66, w: 48, h: 24 },
         dialogue: {
-          title: "Notice board",
+          title: "notice board",
           lines: [
             "Pinned notes, arrows, and one stubborn sketch of a robot arm.",
             "I think by building. Sketch it, break it, work out why, try again.",
@@ -87,7 +87,7 @@ export const SPAWN_ROOM: Scene = {
       interact: {
         zone: { x: 248, y: 112, w: 30, h: 28 },
         dialogue: {
-          title: "The Gate",
+          title: "the gate",
           lines: [
             "A wooden gate, only half built. The road keeps going past it.",
             "More of this world is still going up. Places I haven't finished yet.",

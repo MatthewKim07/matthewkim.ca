@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { GameScene } from "@/components/game/GameScene";
 import { OverworldTitleBackdrop } from "@/components/game/OverworldTitleBackdrop";
@@ -15,42 +15,41 @@ type Mode = "shell" | "scene";
 
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
-function ShellButton({
+// A text-first action that mirrors the portfolio's link interactions: a clean
+// hover color shift with a thin accent underline that wipes in from the center.
+function MenuLink({
   children,
   onClick,
-  variant = "secondary",
+  primary = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
-  variant?: "primary" | "secondary";
+  primary?: boolean;
 }) {
-  const base =
-    "group/btn relative flex w-full items-center gap-3 overflow-hidden rounded-md px-4 py-3 text-sm font-medium tracking-wide transition-all focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
-  const styles =
-    variant === "primary"
-      ? "bg-[#FED34C] text-gray-950 hover:bg-[#ffdf73] focus-visible:outline-[#FED34C]"
-      : "border border-white/10 bg-white/[0.03] text-white/75 hover:border-white/25 hover:bg-white/[0.07] hover:text-white focus-visible:outline-white/60";
-  // Leading marker that animates in on hover/focus (game-menu feel).
-  const marker =
-    variant === "primary"
-      ? "bg-gray-950/70"
-      : "bg-[#FED34C]";
   return (
-    <button type="button" onClick={onClick} className={`${base} ${styles}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group/link relative inline-flex w-fit items-center rounded-sm transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FED34C] ${
+        primary
+          ? "text-lg font-medium text-white hover:text-[#FED34C]"
+          : "text-sm text-white/55 hover:text-white"
+      }`}
+    >
+      {children}
       <span
         aria-hidden
-        className={`h-4 w-[2px] shrink-0 origin-center scale-y-0 transition-transform duration-200 group-hover/btn:scale-y-100 group-focus-visible/btn:scale-y-100 ${marker}`}
+        className="pointer-events-none absolute -bottom-1 left-0 h-px w-full origin-center scale-x-0 bg-[#FED34C] transition-transform duration-300 ease-out group-hover/link:scale-x-100 group-focus-visible/link:scale-x-100 motion-reduce:transition-none"
       />
-      <span>{children}</span>
     </button>
   );
 }
 
 function ControlRow({ label, keys }: { label: string; keys: string }) {
   return (
-    <div className="flex items-center justify-between gap-6 py-1.5">
-      <span className="text-white/50">{label}</span>
-      <span className="text-xs text-white/80">{keys}</span>
+    <div className="flex items-center justify-between gap-6 py-2">
+      <span className="text-white/45">{label}</span>
+      <span className="text-xs text-white/75">{keys}</span>
     </div>
   );
 }
@@ -121,70 +120,66 @@ function ShellContent({
         }}
       />
 
-      <div className="relative z-[1] w-full max-w-sm">
+      <div className="relative z-[1] w-full max-w-sm px-4">
         <AnimatePresence mode="wait" initial={false}>
           {view === "menu" && (
-            <motion.div
-              key="menu"
-              {...panelMotion}
-              className="flex flex-col items-center rounded-2xl border border-white/10 bg-black/30 px-7 py-9 text-center backdrop-blur-sm"
-            >
-              <p className="flex items-center gap-2 text-[0.7rem] uppercase tracking-[0.35em] text-[#FED34C]">
-                <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#FED34C] motion-reduce:animate-none" />
-                Hidden world initialized
-              </p>
+            <motion.div key="menu" {...panelMotion} className="flex flex-col items-center text-center">
               <h2
-                className="mt-5 text-5xl font-semibold tracking-tight md:text-6xl"
-                style={{ textShadow: "0 0 28px rgba(254,211,76,0.25), 0 2px 0 rgba(0,0,0,0.4)" }}
+                className="text-5xl font-semibold tracking-tight md:text-6xl"
+                style={{ textShadow: "0 1px 24px rgba(0,0,0,0.5)" }}
               >
-                Overworld
+                matthew.exe
               </h2>
-              <div aria-hidden className="mt-3 flex items-center gap-2">
-                <span className="h-px w-8 bg-gradient-to-r from-transparent to-white/30" />
-                <span className="h-1 w-1 rotate-45 bg-[#FED34C]" />
-                <span className="h-px w-8 bg-gradient-to-l from-transparent to-white/30" />
+              <div className="mt-10 flex flex-col items-center gap-4">
+                <MenuLink primary onClick={onStart}>
+                  start
+                </MenuLink>
+                <MenuLink onClick={() => setView("controls")}>controls</MenuLink>
               </div>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/55">
-                A playable map of how I think, build, and grow.
-              </p>
-              <div className="mt-8 flex w-full max-w-[15rem] flex-col gap-2.5">
-                <ShellButton variant="primary" onClick={onStart}>
-                  Start
-                </ShellButton>
-                <ShellButton onClick={() => setView("controls")}>Controls</ShellButton>
-                <ShellButton onClick={close}>Back to Portfolio</ShellButton>
-              </div>
-              <p className="mt-7 text-[0.65rem] uppercase tracking-[0.3em] text-white/25">
-                Esc to exit
-              </p>
+              <button
+                type="button"
+                onClick={close}
+                className="group/exit mt-10 inline-flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/80 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+              >
+                <ArrowLeft
+                  size={13}
+                  strokeWidth={1.75}
+                  className="transition-transform group-hover/exit:-translate-x-0.5"
+                />
+                back to portfolio
+              </button>
             </motion.div>
           )}
 
           {view === "controls" && (
-            <motion.div
-              key="controls"
-              {...panelMotion}
-              className="flex flex-col items-center rounded-2xl border border-white/10 bg-black/30 px-7 py-9 text-center backdrop-blur-sm"
-            >
-              <p className="text-[0.7rem] uppercase tracking-[0.35em] text-[#FED34C]">Controls</p>
-              <h3 className="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">How to play</h3>
+            <motion.div key="controls" {...panelMotion} className="flex flex-col items-center text-center">
+              <h3 className="text-2xl font-semibold tracking-tight md:text-3xl">how to play</h3>
               <div className="mt-7 w-full max-w-xs text-left">
-                <p className="mb-1 text-[0.65rem] uppercase tracking-[0.3em] text-white/40">Desktop</p>
-                <div className="border-t border-white/10">
-                  <ControlRow label="Move" keys="WASD / Arrows" />
-                  <ControlRow label="Interact" keys="E" />
-                  <ControlRow label="Back to menu" keys="Esc" />
+                <p className="mb-1 text-[0.7rem] tracking-wide text-white/35">desktop</p>
+                <div className="divide-y divide-white/5">
+                  <ControlRow label="move" keys="WASD / arrows" />
+                  <ControlRow label="interact" keys="E" />
+                  <ControlRow label="back to menu" keys="esc" />
                 </div>
-                <p className="mt-5 mb-1 text-[0.65rem] uppercase tracking-[0.3em] text-white/40">Touch</p>
-                <div className="border-t border-white/10">
-                  <ControlRow label="Move" keys="On-screen D-pad" />
-                  <ControlRow label="Interact" keys="Action button" />
-                  <ControlRow label="Exit" keys="Close button" />
+                <p className="mt-6 mb-1 text-[0.7rem] tracking-wide text-white/35">touch</p>
+                <div className="divide-y divide-white/5">
+                  <ControlRow label="move" keys="on-screen d-pad" />
+                  <ControlRow label="interact" keys="action button" />
+                  <ControlRow label="exit" keys="close button" />
                 </div>
               </div>
-              <div className="mt-8 w-full max-w-[15rem]">
-                <ShellButton onClick={() => setView("menu")}>Back</ShellButton>
-              </div>
+              <button
+                type="button"
+                onClick={() => setView("menu")}
+                className="group/back mt-9 inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/50"
+              >
+                <ArrowLeft
+                  size={14}
+                  strokeWidth={1.75}
+                  className="transition-transform group-hover/back:-translate-x-0.5"
+                />
+                back
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -193,7 +188,7 @@ function ShellContent({
       <button
         type="button"
         onClick={close}
-        aria-label="Close Overworld and return to portfolio"
+        aria-label="Close Matthew.exe and return to portfolio"
         className="absolute top-5 right-5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
       >
         <X size={16} strokeWidth={1.5} />
@@ -275,7 +270,7 @@ export default function GameOverlay() {
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-label="Overworld"
+          aria-label="Matthew.exe"
           tabIndex={-1}
           initial={false}
           animate={{ opacity: 1 }}
