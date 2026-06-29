@@ -95,6 +95,15 @@ export interface SceneObject {
   poweredDialogue?: Dialogue;
 }
 
+/** A "mood record" the player can put on at the record player. */
+export interface Mood {
+  id: string;
+  label: string;
+  line: string;
+  /** Hex tint applied subtly to the room while this mood plays. */
+  tint: string;
+}
+
 /** A collectible personal "thing". Position is the centre in world pixels. */
 export interface Fragment {
   id: string;

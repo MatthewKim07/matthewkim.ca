@@ -6,7 +6,7 @@ import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
 import { renderScene, type PickupEffect, type ShotRender } from "@/game/render";
 import { createInput } from "@/game/input";
-import { SPAWN_ROOM } from "@/game/scenes/spawnRoom";
+import { MOODS, SPAWN_ROOM } from "@/game/scenes/spawnRoom";
 import type { Dialogue, SceneObject } from "@/game/types";
 
 // React host for the playable scene. Runs the engine + renderer in one RAF loop
@@ -74,6 +74,25 @@ export function GameScene({
   const [aiming, setAiming] = useState(false);
   const [streak, setStreak] = useState(0);
 
+  // Record-player mood selector.
+  const [choosing, setChoosing] = useState(false);
+  const [moodIndex, setMoodIndex] = useState(0);
+  const [mood, setMood] = useState<string | null>(null); // currently playing
+  const choosingRef = useRef(false);
+  const moodIndexRef = useRef(0);
+  const moodRef = useRef<string | null>(null);
+  useEffect(() => {
+    choosingRef.current = choosing;
+  }, [choosing]);
+  useEffect(() => {
+    moodIndexRef.current = moodIndex;
+  }, [moodIndex]);
+  useEffect(() => {
+    moodRef.current = mood;
+  }, [mood]);
+
+  const [promptPlay, setPromptPlay] = useState(false);
+
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -113,18 +132,51 @@ export function GameScene({
         return;
       }
     }
+    if (obj.kind === "recordplayer") {
+      const hasRecord = stateRef.current?.fragments.find((f) => f.id === "record")?.collected;
+      if (hasRecord) {
+        // Open the carousel on the currently playing mood, if any.
+        const idx = moodRef.current ? MOODS.findIndex((m) => m.id === moodRef.current) : 0;
+        setMoodIndex(idx < 0 ? 0 : idx);
+        setChoosing(true);
+        choosingRef.current = true;
+        return;
+      }
+    }
     if (!obj.interact) return;
     const d =
       stateRef.current?.gatePowered && obj.poweredDialogue ? obj.poweredDialogue : obj.interact.dialogue;
     openDialogue(d);
   }, [openDialogue]);
 
-  // The single action button: advance dialogue, release a shot, or interact.
+  const flipMood = useCallback((delta: number) => {
+    setMoodIndex((i) => (i + delta + MOODS.length) % MOODS.length);
+  }, []);
+
+  const selectMood = useCallback(() => {
+    const m = MOODS[moodIndexRef.current];
+    setMood(m.id);
+    moodRef.current = m.id;
+    setChoosing(false);
+    choosingRef.current = false;
+    showToast(m.line);
+  }, [showToast]);
+
+  const closeSelector = useCallback(() => {
+    setChoosing(false);
+    choosingRef.current = false;
+  }, []);
+
+  // The single action button: advance dialogue, pick a mood, release a shot, or interact.
   const action = useCallback(() => {
     if (dialogueRef.current) {
       const d = dialogueRef.current;
       if (lineRef.current < d.lines.length - 1) setLine((l) => l + 1);
       else setDialogue(null);
+      return;
+    }
+    if (choosingRef.current) {
+      selectMood();
       return;
     }
     const s = shotRef.current;
@@ -147,7 +199,7 @@ export function GameScene({
       return; // ignore presses while the ball is in the air
     }
     tryInteract();
-  }, [finishShot, reduceMotion, tryInteract]);
+  }, [finishShot, reduceMotion, selectMood, tryInteract]);
 
   const cancelShot = useCallback(() => {
     shotRef.current = null;
@@ -193,7 +245,8 @@ export function GameScene({
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.05) dt = 0.05; // clamp after tab switch / hitches
-      if (!dialogueRef.current && !shotRef.current) step(state, input.intent(), dt);
+      if (!dialogueRef.current && !shotRef.current && !choosingRef.current)
+        step(state, input.intent(), dt);
 
       // Mini-game: sweep the aim marker, or advance/finish the ball arc.
       const shot = shotRef.current;
@@ -248,15 +301,21 @@ export function GameScene({
         effectsRef.current = effectsRef.current.filter((e) => now - e.start < 760);
       }
 
-      const showPrompt = !dialogueRef.current && !shotRef.current && state.nearestId !== null;
+      const showPrompt =
+        !dialogueRef.current && !shotRef.current && !choosingRef.current && state.nearestId !== null;
       const isShootHoop =
         state.nearestId === "hoop" && !!state.fragments.find((f) => f.id === "ball")?.collected;
+      const isPlayRecord =
+        state.nearestId === "recordplayer" &&
+        !!state.fragments.find((f) => f.id === "record")?.collected;
       if (showPrompt !== prompt) {
         prompt = showPrompt;
         setHasPrompt(showPrompt);
         setPromptShoot(showPrompt && isShootHoop);
+        setPromptPlay(showPrompt && isPlayRecord);
       } else if (showPrompt) {
         setPromptShoot(isShootHoop);
+        setPromptPlay(isPlayRecord);
       }
 
       let shotRender: ShotRender | null = null;
@@ -278,6 +337,7 @@ export function GameScene({
         showPrompt,
         effects: effectsRef.current,
         shot: shotRender,
+        mood: moodRef.current,
       });
       raf = requestAnimationFrame(tick);
     };
@@ -297,8 +357,24 @@ export function GameScene({
       if (e.key === "Escape") {
         e.preventDefault();
         if (dialogueRef.current) closeDialogue();
+        else if (choosingRef.current) closeSelector();
         else if (shotRef.current) cancelShot();
         else onMenu();
+        return;
+      }
+      // Mood carousel owns all keys while it's open.
+      if (choosingRef.current) {
+        const k = e.key.toLowerCase();
+        if (k === "arrowleft" || k === "a") {
+          e.preventDefault();
+          flipMood(-1);
+        } else if (k === "arrowright" || k === "d") {
+          e.preventDefault();
+          flipMood(1);
+        } else if (k === "e" || k === "enter" || k === " ") {
+          e.preventDefault();
+          selectMood();
+        }
         return;
       }
       // Let buttons handle their own Enter/Space activation.
@@ -310,7 +386,7 @@ export function GameScene({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [action, cancelShot, closeDialogue, onMenu]);
+  }, [action, cancelShot, closeDialogue, closeSelector, flipMood, selectMood, onMenu]);
 
   // Focus the scene container on mount so keyboard play works immediately.
   useEffect(() => {
@@ -413,6 +489,11 @@ export function GameScene({
             streak {streak}
           </div>
         )}
+        {mood && !choosing && (
+          <div className="mt-2 rounded-full bg-black/30 px-2.5 py-0.5 text-[0.65rem] text-white/70 backdrop-blur-sm">
+            now playing — {MOODS.find((m) => m.id === mood)?.label}
+          </div>
+        )}
       </div>
 
       {/* Proximity prompt. */}
@@ -430,6 +511,8 @@ export function GameScene({
               {isTouch ? (
                 promptShoot ? (
                   "tap to shoot"
+                ) : promptPlay ? (
+                  "tap to play"
                 ) : (
                   "tap to interact"
                 )
@@ -441,7 +524,7 @@ export function GameScene({
                   >
                     E
                   </kbd>
-                  {promptShoot ? "shoot" : "interact"}
+                  {promptShoot ? "shoot" : promptPlay ? "play" : "interact"}
                 </>
               )}
             </span>
@@ -468,10 +551,21 @@ export function GameScene({
       </AnimatePresence>
 
       {/* Touch controls. */}
-      {isTouch && !dialogue && (
+      {isTouch && !dialogue && !choosing && (
         <TouchControls
           onDir={(dir, on) => inputRef.current?.setTouch(dir, on)}
           onAction={action}
+        />
+      )}
+
+      {/* Mood-record carousel. */}
+      {choosing && (
+        <MoodSelector
+          index={moodIndex}
+          isTouch={isTouch}
+          onFlip={flipMood}
+          onSelect={selectMood}
+          onClose={closeSelector}
         />
       )}
 
@@ -479,6 +573,89 @@ export function GameScene({
       {dialogue && (
         <DialogueBox dialogue={dialogue} line={line} isLast={isLast} onAdvance={advance} onClose={closeDialogue} />
       )}
+    </div>
+  );
+}
+
+function MoodSelector({
+  index,
+  isTouch,
+  onFlip,
+  onSelect,
+  onClose,
+}: {
+  index: number;
+  isTouch: boolean;
+  onFlip: (delta: number) => void;
+  onSelect: () => void;
+  onClose: () => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.focus();
+  }, []);
+  const m = MOODS[index];
+
+  const arrow = (delta: number, label: string, glyph: string) => (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={() => onFlip(delta)}
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-lg text-white/80 transition-colors hover:bg-white/20 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+    >
+      {glyph}
+    </button>
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-label="pick a record"
+      className="absolute inset-x-0 bottom-0 z-30 border-t border-white/10 bg-gray-900/95 backdrop-blur-sm focus:outline-none"
+      style={{
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        paddingLeft: "max(1.25rem, env(safe-area-inset-left))",
+        paddingRight: "max(1.25rem, env(safe-area-inset-right))",
+        paddingTop: "1rem",
+        fontFamily: "var(--font-sf)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="close record selector"
+        className="absolute right-3 top-2 rounded px-2 py-1 text-xs text-white/50 transition-colors hover:text-white/80 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+      >
+        close
+      </button>
+      <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
+        <p className="text-[0.7rem] tracking-[0.15em] text-[#FED34C]">pick a record</p>
+        <div className="flex items-center gap-5">
+          {arrow(-1, "previous record", "‹")}
+          <button
+            type="button"
+            onClick={onSelect}
+            aria-label={`play ${m.label}`}
+            className="flex flex-col items-center gap-2 rounded-md p-1 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FED34C]"
+          >
+            <span
+              className="flex h-12 w-12 items-center justify-center rounded-sm"
+              style={{ backgroundColor: m.tint, boxShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-950">
+                <span className="h-2 w-2 rounded-full bg-[#FED34C]" />
+              </span>
+            </span>
+            <span className="text-sm text-white/90">{m.label}</span>
+          </button>
+          {arrow(1, "next record", "›")}
+        </div>
+        <p className="text-[0.6rem] text-white/40">
+          {isTouch ? "tap arrows · action select" : "← → flip · E select"}
+        </p>
+      </div>
     </div>
   );
 }

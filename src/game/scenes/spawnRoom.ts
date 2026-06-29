@@ -1,4 +1,14 @@
-import type { Scene } from "@/game/types";
+import type { Mood, Scene } from "@/game/types";
+
+// Mood records for the record-player interaction. No real audio / no copyrighted
+// references — just a vibe, a personal line, and a subtle room tint.
+export const MOODS: Mood[] = [
+  { id: "focus", label: "focus", line: "everything goes quiet except the thing in front of me.", tint: "#3fb0a8" },
+  { id: "late-night", label: "late night", line: "the best ideas show up when i should be asleep.", tint: "#6a5acd" },
+  { id: "walk-home", label: "walk home", line: "headphones in, nowhere to be.", tint: "#e0894f" },
+  { id: "hype", label: "hype", line: "okay, now i can do anything.", tint: "#e3614f" },
+  { id: "rainy-day", label: "rainy day", line: "i like the gloom more than i admit.", tint: "#7e93a8" },
+];
 
 // matthew's room — the first playable scene inside matthew.exe. A cozy, bright
 // DS-era top-down bedroom you spawn into and explore. Personal, not a project
@@ -124,8 +134,9 @@ export const SPAWN_ROOM: Scene = {
         dialogue: {
           title: "records",
           lines: [
-            "something's still spinning.",
+            "the turntable's bare.",
             "i pick records by mood, not genre. usually the wrong one.",
+            "left my record around here somewhere.",
           ],
         },
       },

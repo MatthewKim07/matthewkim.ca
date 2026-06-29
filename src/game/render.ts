@@ -1,5 +1,6 @@
 import type { GameState, PlayerState } from "@/game/engine";
 import type { Fragment, SceneObject, TerrainPatch, Vec2 } from "@/game/types";
+import { MOODS } from "@/game/scenes/spawnRoom";
 
 // Canvas renderer — matthew's room: a bright, cozy DS-era top-down bedroom.
 // Single context, image smoothing off, integer-scaled + letterboxed for crisp
@@ -90,7 +91,14 @@ export interface RenderOptions {
   showPrompt: boolean;
   effects?: PickupEffect[];
   shot?: ShotRender | null;
+  /** Currently playing mood id (record player), or null. */
+  mood?: string | null;
   camera?: Vec2;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 function block(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) {
@@ -178,8 +186,44 @@ export function renderScene(
   if (opts.effects) for (const e of opts.effects) drawPickupEffect(ctx, e, time);
   if (opts.shot) drawShot(ctx, scene, opts.shot);
 
+  if (opts.mood) drawMood(ctx, scene, opts.mood, time, opts.reduceMotion);
+
   drawAmbientLight(ctx, scene.width, scene.height);
   ctx.restore();
+}
+
+// Subtle room tint + floating notes for the currently playing mood.
+function drawMood(
+  ctx: CanvasRenderingContext2D,
+  scene: GameState["scene"],
+  moodId: string,
+  time: number,
+  reduceMotion: boolean
+) {
+  const mood = MOODS.find((m) => m.id === moodId);
+  if (!mood) return;
+  const [r, g, b] = hexToRgb(mood.tint);
+
+  // gentle, low-alpha wash so the room keeps its brightness
+  ctx.fillStyle = `rgba(${r},${g},${b},0.1)`;
+  ctx.fillRect(0, 0, scene.width, scene.height);
+
+  if (reduceMotion) return;
+
+  // music notes drifting up from the record-player corner
+  const player = scene.objects.find((o) => o.kind === "recordplayer");
+  if (!player) return;
+  const ox = player.rect.x + player.rect.w / 2;
+  const oy = player.rect.y - 2;
+  ctx.font = "8px sans-serif";
+  for (let i = 0; i < 4; i++) {
+    const t = ((time / 1400 + i / 4) % 1);
+    const ny = oy - t * 30;
+    const nx = ox + Math.sin(t * Math.PI * 2 + i) * 6 + i * 2 - 3;
+    const a = Math.sin(t * Math.PI) * 0.7;
+    ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(2)})`;
+    ctx.fillText(i % 2 ? "♪" : "♫", nx, ny);
+  }
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
