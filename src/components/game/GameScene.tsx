@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
-import { renderScene, type PickupEffect } from "@/game/render";
+import { renderScene, type PickupEffect, type ShotRender } from "@/game/render";
 import { createInput } from "@/game/input";
 import { SPAWN_ROOM } from "@/game/scenes/spawnRoom";
 import type { Dialogue, SceneObject } from "@/game/types";
@@ -16,6 +16,21 @@ import type { Dialogue, SceneObject } from "@/game/types";
 function findObject(id: string | null): SceneObject | undefined {
   if (!id) return undefined;
   return SPAWN_ROOM.objects.find((o) => o.id === id);
+}
+
+// Basketball mini-game tuning.
+const SHOOT_MS = 650;
+
+type ShotState =
+  | { phase: "aim"; marker: number; dir: number }
+  | { phase: "shoot"; marker: number; result: "make" | "miss"; text: string; start: number };
+
+function shotResult(p: number): { make: boolean; text: string } {
+  const dist = Math.abs(p - 0.5);
+  if (dist <= 0.06) return { make: true, text: "all net" };
+  if (dist <= 0.13) return { make: true, text: "clean" };
+  if (dist <= 0.22) return { make: false, text: "rimmed out" };
+  return { make: false, text: "off the rim" };
 }
 
 export function GameScene({
@@ -46,12 +61,18 @@ export function GameScene({
   }, [line]);
 
   const [hasPrompt, setHasPrompt] = useState(false);
+  const [promptShoot, setPromptShoot] = useState(false);
 
   // Quest state (discrete events only — never updated per frame).
   const TOTAL = SPAWN_ROOM.fragments.length;
   const [collected, setCollected] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
+
+  // Mini-game state. Ref drives the loop/render; `aiming`/`streak` drive DOM.
+  const shotRef = useRef<ShotState | null>(null);
+  const [aiming, setAiming] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -68,15 +89,70 @@ export function GameScene({
     setDialogue(d);
   }, []);
 
+  const finishShot = useCallback(
+    (make: boolean, text: string) => {
+      shotRef.current = null;
+      setAiming(false);
+      setStreak((s) => (make ? s + 1 : 0));
+      showToast(text);
+    },
+    [showToast]
+  );
+
+  // E/Action at the hoop (with the ball collected) starts the timing shot;
+  // otherwise interact normally.
   const tryInteract = useCallback(() => {
     if (dialogueRef.current) return;
     const obj = findObject(stateRef.current?.nearestId ?? null);
-    if (!obj?.interact) return;
-    // The door switches to its open lines once all things are gathered.
+    if (!obj) return;
+    if (obj.kind === "hoop") {
+      const hasBall = stateRef.current?.fragments.find((f) => f.id === "ball")?.collected;
+      if (hasBall) {
+        shotRef.current = { phase: "aim", marker: 0, dir: 1 };
+        setAiming(true);
+        return;
+      }
+    }
+    if (!obj.interact) return;
     const d =
       stateRef.current?.gatePowered && obj.poweredDialogue ? obj.poweredDialogue : obj.interact.dialogue;
     openDialogue(d);
   }, [openDialogue]);
+
+  // The single action button: advance dialogue, release a shot, or interact.
+  const action = useCallback(() => {
+    if (dialogueRef.current) {
+      const d = dialogueRef.current;
+      if (lineRef.current < d.lines.length - 1) setLine((l) => l + 1);
+      else setDialogue(null);
+      return;
+    }
+    const s = shotRef.current;
+    if (s) {
+      if (s.phase === "aim") {
+        const { make, text } = shotResult(s.marker);
+        if (reduceMotion) {
+          finishShot(make, text);
+        } else {
+          shotRef.current = {
+            phase: "shoot",
+            marker: s.marker,
+            result: make ? "make" : "miss",
+            text,
+            start: performance.now(),
+          };
+          setAiming(false);
+        }
+      }
+      return; // ignore presses while the ball is in the air
+    }
+    tryInteract();
+  }, [finishShot, reduceMotion, tryInteract]);
+
+  const cancelShot = useCallback(() => {
+    shotRef.current = null;
+    setAiming(false);
+  }, []);
 
   const advance = useCallback(() => {
     const d = dialogueRef.current;
@@ -117,7 +193,26 @@ export function GameScene({
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.05) dt = 0.05; // clamp after tab switch / hitches
-      if (!dialogueRef.current) step(state, input.intent(), dt);
+      if (!dialogueRef.current && !shotRef.current) step(state, input.intent(), dt);
+
+      // Mini-game: sweep the aim marker, or advance/finish the ball arc.
+      const shot = shotRef.current;
+      if (shot?.phase === "aim") {
+        const speed = reduceMotion ? 1.05 : 1.5; // sweeps per second
+        let m = shot.marker + shot.dir * speed * dt;
+        let dir = shot.dir;
+        if (m >= 1) {
+          m = 1;
+          dir = -1;
+        } else if (m <= 0) {
+          m = 0;
+          dir = 1;
+        }
+        shot.marker = m;
+        shot.dir = dir;
+      } else if (shot?.phase === "shoot") {
+        if (now - shot.start >= SHOOT_MS) finishShot(shot.result === "make", shot.text);
+      }
 
       // Drain discrete events from this frame (collection / completion).
       if (state.events.length) {
@@ -153,12 +248,37 @@ export function GameScene({
         effectsRef.current = effectsRef.current.filter((e) => now - e.start < 760);
       }
 
-      const showPrompt = !dialogueRef.current && state.nearestId !== null;
+      const showPrompt = !dialogueRef.current && !shotRef.current && state.nearestId !== null;
+      const isShootHoop =
+        state.nearestId === "hoop" && !!state.fragments.find((f) => f.id === "ball")?.collected;
       if (showPrompt !== prompt) {
         prompt = showPrompt;
         setHasPrompt(showPrompt);
+        setPromptShoot(showPrompt && isShootHoop);
+      } else if (showPrompt) {
+        setPromptShoot(isShootHoop);
       }
-      renderScene(ctx, canvas, state, { reduceMotion, dpr, showPrompt, effects: effectsRef.current });
+
+      let shotRender: ShotRender | null = null;
+      const sc = shotRef.current;
+      if (sc?.phase === "aim") {
+        shotRender = { phase: "aim", marker: sc.marker };
+      } else if (sc?.phase === "shoot") {
+        shotRender = {
+          phase: "shoot",
+          marker: sc.marker,
+          result: sc.result,
+          progress: Math.min((now - sc.start) / SHOOT_MS, 1),
+        };
+      }
+
+      renderScene(ctx, canvas, state, {
+        reduceMotion,
+        dpr,
+        showPrompt,
+        effects: effectsRef.current,
+        shot: shotRender,
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -169,7 +289,7 @@ export function GameScene({
       input.detach();
       if (toastTimer.current) window.clearTimeout(toastTimer.current);
     };
-  }, [reduceMotion, showToast, TOTAL]);
+  }, [reduceMotion, showToast, TOTAL, finishShot]);
 
   // Keyboard: Esc back-stack + interact/advance. Movement keys handled in input.
   useEffect(() => {
@@ -177,6 +297,7 @@ export function GameScene({
       if (e.key === "Escape") {
         e.preventDefault();
         if (dialogueRef.current) closeDialogue();
+        else if (shotRef.current) cancelShot();
         else onMenu();
         return;
       }
@@ -184,13 +305,12 @@ export function GameScene({
       if ((e.target as HTMLElement)?.tagName === "BUTTON") return;
       if (e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (dialogueRef.current) advance();
-        else tryInteract();
+        action();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advance, closeDialogue, onMenu, tryInteract]);
+  }, [action, cancelShot, closeDialogue, onMenu]);
 
   // Focus the scene container on mount so keyboard play works immediately.
   useEffect(() => {
@@ -288,6 +408,11 @@ export function GameScene({
             </motion.div>
           )}
         </AnimatePresence>
+        {streak >= 2 && (
+          <div className="mt-2 rounded-full bg-black/30 px-2.5 py-0.5 text-[0.65rem] text-[#FED34C] backdrop-blur-sm">
+            streak {streak}
+          </div>
+        )}
       </div>
 
       {/* Proximity prompt. */}
@@ -303,7 +428,11 @@ export function GameScene({
           >
             <span className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm">
               {isTouch ? (
-                "tap to interact"
+                promptShoot ? (
+                  "tap to shoot"
+                ) : (
+                  "tap to interact"
+                )
               ) : (
                 <>
                   <kbd
@@ -312,9 +441,27 @@ export function GameScene({
                   >
                     E
                   </kbd>
-                  interact
+                  {promptShoot ? "shoot" : "interact"}
                 </>
               )}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Aim hint while the timing bar is sweeping. */}
+      <AnimatePresence>
+        {aiming && (
+          <motion.div
+            key="aim"
+            initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="pointer-events-none absolute inset-x-0 bottom-28 z-10 flex justify-center"
+          >
+            <span className="rounded-full bg-black/40 px-3 py-1.5 text-xs text-[#FED34C] backdrop-blur-sm">
+              {isTouch ? "tap to shoot" : "press E to shoot"}
             </span>
           </motion.div>
         )}
@@ -324,7 +471,7 @@ export function GameScene({
       {isTouch && !dialogue && (
         <TouchControls
           onDir={(dir, on) => inputRef.current?.setTouch(dir, on)}
-          onAction={tryInteract}
+          onAction={action}
         />
       )}
 

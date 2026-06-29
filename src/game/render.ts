@@ -76,11 +76,20 @@ export interface PickupEffect {
   kind: "fragment" | "gate";
 }
 
+// Basketball mini-game render state (host-driven).
+export interface ShotRender {
+  phase: "aim" | "shoot";
+  marker: number; // 0..1 during aim
+  result?: "make" | "miss";
+  progress?: number; // 0..1 during shoot
+}
+
 export interface RenderOptions {
   reduceMotion: boolean;
   dpr: number;
   showPrompt: boolean;
   effects?: PickupEffect[];
+  shot?: ShotRender | null;
   camera?: Vec2;
 }
 
@@ -167,9 +176,88 @@ export function renderScene(
     if (obj) drawPromptMarker(ctx, obj, state.player.anim);
   }
   if (opts.effects) for (const e of opts.effects) drawPickupEffect(ctx, e, time);
+  if (opts.shot) drawShot(ctx, scene, opts.shot);
 
   drawAmbientLight(ctx, scene.width, scene.height);
   ctx.restore();
+}
+
+function drawBall(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+  ctx.fillStyle = C.outline;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#e07a2f";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = C.outline;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 3, cy);
+  ctx.lineTo(cx + 3, cy);
+  ctx.moveTo(cx, cy - 3);
+  ctx.lineTo(cx, cy + 3);
+  ctx.stroke();
+}
+
+// Timing bar (aim) + scripted ball arc (shoot), drawn around the hoop.
+function drawShot(ctx: CanvasRenderingContext2D, scene: GameState["scene"], shot: ShotRender) {
+  const hoop = scene.objects.find((o) => o.kind === "hoop");
+  if (!hoop) return;
+  const hx = hoop.rect.x + hoop.rect.w / 2;
+  const rimY = hoop.rect.y + 10;
+
+  if (shot.phase === "aim") {
+    const bw = 44;
+    const bh = 5;
+    const bx = Math.min(hx - bw / 2, scene.width - 16 - bw);
+    const by = hoop.rect.y - 16;
+    block(ctx, bx - 1, by - 1, bw + 2, bh + 2, "#2b3340");
+    ctx.fillStyle = "#3a4654";
+    ctx.fillRect(bx, by, bw, bh);
+    // sweet zones (make = inner 26%, perfect = inner 12%)
+    ctx.fillStyle = "#5fae6b";
+    ctx.fillRect(bx + bw * 0.37, by, bw * 0.26, bh);
+    ctx.fillStyle = "#86d98f";
+    ctx.fillRect(bx + bw * 0.44, by, bw * 0.12, bh);
+    // marker
+    const mx = Math.round(bx + shot.marker * bw);
+    ctx.fillStyle = C.accent;
+    ctx.fillRect(mx - 1, by - 2, 2, bh + 4);
+  } else {
+    const sx = hx;
+    const sy = hoop.rect.y + 46; // free-throw spot below the hoop
+    const p = shot.progress ?? 0;
+    let bxp: number;
+    let byp: number;
+    if (p < 0.7) {
+      const t = p / 0.7;
+      bxp = sx;
+      byp = sy + (rimY - sy) * t - Math.sin(t * Math.PI) * 20; // arc up to rim
+    } else {
+      const t = (p - 0.7) / 0.3;
+      if (shot.result === "make") {
+        bxp = hx;
+        byp = rimY + t * 16; // drop through the net
+        // net wiggle
+        ctx.strokeStyle = `rgba(243,239,228,${0.8 - t * 0.6})`;
+        ctx.lineWidth = 1;
+        const sway = Math.sin(t * Math.PI * 3) * 2;
+        ctx.beginPath();
+        ctx.moveTo(hx - 4, rimY + 1);
+        ctx.lineTo(hx - 2 + sway, rimY + 7);
+        ctx.moveTo(hx + 4, rimY + 1);
+        ctx.lineTo(hx + 2 + sway, rimY + 7);
+        ctx.stroke();
+      } else {
+        const dir = hx > scene.width / 2 ? -1 : 1; // bounce toward the room
+        bxp = hx + dir * t * 16;
+        byp = rimY - Math.sin(t * Math.PI) * 7 + t * 12; // clank + fall away
+      }
+    }
+    drawBall(ctx, bxp, byp);
+  }
 }
 
 function drawFloor(ctx: CanvasRenderingContext2D, w: number, h: number) {

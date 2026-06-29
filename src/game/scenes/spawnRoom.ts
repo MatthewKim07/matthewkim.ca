@@ -107,6 +107,7 @@ export const SPAWN_ROOM: Scene = {
           lines: [
             "the rim's bent just enough to be annoying.",
             "i shoot to clear my head. mostly i just like the sound.",
+            "the ball's around here somewhere.",
           ],
         },
       },
