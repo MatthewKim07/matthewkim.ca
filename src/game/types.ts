@@ -14,3 +14,87 @@ export interface GameContextValue {
   /** Return to the portfolio (-> idle). */
   close: () => void;
 }
+
+// ---------------------------------------------------------------------------
+// Playable scene types ("The Workshop", first Overworld room).
+// World units are pixels in the scene's fixed base resolution; the renderer
+// integer-scales and letterboxes them to fit the overlay.
+// ---------------------------------------------------------------------------
+
+export interface Vec2 {
+  x: number;
+  y: number;
+}
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export type Facing = "up" | "down" | "left" | "right";
+
+/** Raw directional input, each axis in [-1, 1]. Diagonals normalized later. */
+export interface InputIntent {
+  dx: number;
+  dy: number;
+}
+
+export interface Dialogue {
+  title?: string;
+  lines: string[];
+}
+
+export type SceneObjectKind =
+  | "workbench"
+  | "noticeboard"
+  | "gate"
+  | "building"
+  | "tree"
+  | "bush"
+  | "barrel"
+  | "crate"
+  | "lamp"
+  | "signpost"
+  | "flowers"
+  | "rock"
+  | "well";
+
+/** Ground patches painted under the objects to build a readable overworld. */
+export type TerrainKind = "path" | "plaza" | "water" | "grassDark" | "flowerbed" | "sand";
+
+export interface TerrainPatch {
+  kind: TerrainKind;
+  rect: Rect;
+}
+
+export interface SceneObject {
+  id: string;
+  kind: SceneObjectKind;
+  /** Draw footprint in world pixels. */
+  rect: Rect;
+  /** Contributes to collision when true. */
+  solid?: boolean;
+  /** Makes the object interactable. */
+  interact?: {
+    /** Proximity zone the player must overlap to interact. */
+    zone: Rect;
+    dialogue: Dialogue;
+  };
+}
+
+export interface Scene {
+  id: string;
+  name: string;
+  /** Base resolution in world pixels. */
+  width: number;
+  height: number;
+  spawn: Vec2;
+  /** Solid structural rects (map border / hedges). */
+  walls: Rect[];
+  /** Ground patches drawn over the grass base (paths, plaza, water...). */
+  terrain: TerrainPatch[];
+  /** Drawn + interactable objects (depth-sorted by foot Y). */
+  objects: SceneObject[];
+}
