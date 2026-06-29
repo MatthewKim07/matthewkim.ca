@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { MatthewTrigger } from "@/components/MatthewTrigger";
 
 const NAME = "Matthew Kim";
 const CHARS = NAME.split("");
@@ -186,6 +187,7 @@ export default function AnimatedTitle({
       style={{ fontFamily, position: "relative" }}
       className={className}
     >
+      <MatthewTrigger>
       {CHARS.slice(0, KIM_START).map((char, i) => {
         const s = seeds[i];
         return (
@@ -207,6 +209,7 @@ export default function AnimatedTitle({
           </motion.span>
         );
       })}
+      </MatthewTrigger>
 
       <span
         ref={kimRef}
