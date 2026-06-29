@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
 import { renderScene } from "@/game/render";
@@ -45,6 +46,18 @@ export function GameScene({
 
   const [hasPrompt, setHasPrompt] = useState(false);
 
+  // Quest state (discrete events only — never updated per frame).
+  const TOTAL = SPAWN_ROOM.fragments.length;
+  const [collected, setCollected] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200);
+  }, []);
+
   const [isTouch] = useState(
     () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches
   );
@@ -57,7 +70,11 @@ export function GameScene({
   const tryInteract = useCallback(() => {
     if (dialogueRef.current) return;
     const obj = findObject(stateRef.current?.nearestId ?? null);
-    if (obj?.interact) openDialogue(obj.interact.dialogue);
+    if (!obj?.interact) return;
+    // The gate switches to its powered lines once the workshop is awake.
+    const d =
+      stateRef.current?.gatePowered && obj.poweredDialogue ? obj.poweredDialogue : obj.interact.dialogue;
+    openDialogue(d);
   }, [openDialogue]);
 
   const advance = useCallback(() => {
@@ -100,6 +117,24 @@ export function GameScene({
       last = now;
       if (dt > 0.05) dt = 0.05; // clamp after tab switch / hitches
       if (!dialogueRef.current) step(state, input.intent(), dt);
+
+      // Drain discrete events from this frame (collection / completion).
+      if (state.events.length) {
+        for (const e of state.events) {
+          if (e.type === "fragment") {
+            setCollected(state.collected);
+            showToast(
+              state.collected >= TOTAL
+                ? "fragment found — workshop awake"
+                : `fragment found — ${state.collected}/${TOTAL}`
+            );
+          } else if (e.type === "gate") {
+            showToast("gate powered");
+          }
+        }
+        state.events.length = 0;
+      }
+
       const showPrompt = !dialogueRef.current && state.nearestId !== null;
       if (showPrompt !== prompt) {
         prompt = showPrompt;
@@ -114,8 +149,9 @@ export function GameScene({
       cancelAnimationFrame(raf);
       ro.disconnect();
       input.detach();
+      if (toastTimer.current) window.clearTimeout(toastTimer.current);
     };
-  }, [reduceMotion]);
+  }, [reduceMotion, showToast, TOTAL]);
 
   // Keyboard: Esc back-stack + interact/advance. Movement keys handled in input.
   useEffect(() => {
@@ -157,9 +193,13 @@ export function GameScene({
       {/* Offscreen description for assistive tech (canvas is decorative). */}
       <p className="sr-only">
         The Workshop Courtyard: a small sunny plaza you can walk around, with a workshop building, a
-        pond, trees and stone paths. It contains a workbench with a terminal, a notice board, and a
-        half-built gate. Move with the arrow keys or WASD, press E near an object to read it, Escape
-        to return to the menu.
+        pond, trees and stone paths. Objective: collect three build fragments scattered around the
+        courtyard to wake the workshop and power the gate. It contains a workbench with a terminal, a
+        notice board, and a half-built gate. Move with the arrow keys or WASD, press E near an object
+        to read it, Escape to return to the menu.
+      </p>
+      <p className="sr-only" aria-live="polite">
+        {collected >= TOTAL ? "Workshop awake. Gate powered." : `Fragments collected: ${collected} of ${TOTAL}.`}
       </p>
 
       {/* Top bar: Menu + hard close. */}
@@ -188,6 +228,40 @@ export function GameScene({
         >
           <X size={16} strokeWidth={1.75} />
         </button>
+      </div>
+
+      {/* Objective tracker (minimal, top-centre). */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center"
+        style={{ paddingTop: "max(0.85rem, env(safe-area-inset-top))" }}
+      >
+        <div
+          className="flex items-center gap-2 text-xs text-white/85"
+          style={{ textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}
+        >
+          <span aria-hidden className="inline-block h-1.5 w-1.5 rotate-45 bg-[#FED34C]" />
+          {collected >= TOTAL ? (
+            <span className="text-[#FED34C]">workshop awake</span>
+          ) : (
+            <span>
+              fragments <span className="text-[#FED34C]">{collected}</span>/{TOTAL}
+            </span>
+          )}
+        </div>
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              key={toast}
+              initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 rounded-full bg-black/35 px-3 py-1 text-[0.7rem] text-white/90 backdrop-blur-sm"
+            >
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Proximity prompt. */}

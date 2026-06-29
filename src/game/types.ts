@@ -82,6 +82,15 @@ export interface SceneObject {
     zone: Rect;
     dialogue: Dialogue;
   };
+  /** Alternate dialogue shown once the workshop is powered (e.g. the gate). */
+  poweredDialogue?: Dialogue;
+}
+
+/** A collectible "build fragment". Position is the centre in world pixels. */
+export interface Fragment {
+  id: string;
+  x: number;
+  y: number;
 }
 
 export interface Scene {
@@ -97,4 +106,6 @@ export interface Scene {
   terrain: TerrainPatch[];
   /** Drawn + interactable objects (depth-sorted by foot Y). */
   objects: SceneObject[];
+  /** Collectible build fragments (the first-objective loop). */
+  fragments: Fragment[];
 }

@@ -17,12 +17,28 @@ export interface PlayerState {
   anim: number; // seconds spent moving, for walk bob
 }
 
+export interface FragmentState {
+  id: string;
+  x: number;
+  y: number;
+  collected: boolean;
+}
+
+/** Discrete events the host (React) drains each frame for toasts / tracker. */
+export type GameEvent = { type: "fragment"; id: string } | { type: "gate" };
+
 export interface GameState {
   scene: Scene;
   player: PlayerState;
   solids: Rect[];
   nearestId: string | null;
+  fragments: FragmentState[];
+  collected: number;
+  gatePowered: boolean;
+  events: GameEvent[];
 }
+
+const FRAG_PICKUP = 11; // collection radius box (world px), a touch forgiving
 
 function intersects(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -46,6 +62,10 @@ export function createGameState(scene: Scene): GameState {
     },
     solids,
     nearestId: null,
+    fragments: scene.fragments.map((f) => ({ id: f.id, x: f.x, y: f.y, collected: false })),
+    collected: 0,
+    gatePowered: false,
+    events: [],
   };
 }
 
@@ -108,4 +128,24 @@ export function step(state: GameState, intent: InputIntent, dt: number): void {
     }
   }
   state.nearestId = nearest;
+
+  // Auto-collect fragments the player gets close to.
+  for (const frag of state.fragments) {
+    if (frag.collected) continue;
+    const box: Rect = {
+      x: frag.x - FRAG_PICKUP / 2,
+      y: frag.y - FRAG_PICKUP / 2,
+      w: FRAG_PICKUP,
+      h: FRAG_PICKUP,
+    };
+    if (intersects(p, box)) {
+      frag.collected = true;
+      state.collected += 1;
+      state.events.push({ type: "fragment", id: frag.id });
+      if (state.collected >= state.fragments.length && !state.gatePowered) {
+        state.gatePowered = true;
+        state.events.push({ type: "gate" });
+      }
+    }
+  }
 }

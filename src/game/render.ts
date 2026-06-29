@@ -133,12 +133,19 @@ export function renderScene(
   for (const p of scene.terrain) drawTerrain(ctx, p, time);
   drawHedges(ctx, scene.width, scene.height);
 
-  // Depth sort objects + player by foot Y so overlaps look right.
+  // Depth sort objects, fragments, and player by foot Y so overlaps look right.
   type Drawable = { y: number; draw: () => void };
   const drawables: Drawable[] = scene.objects.map((o) => ({
     y: o.rect.y + o.rect.h,
-    draw: () => drawObject(ctx, o, time),
+    draw: () => drawObject(ctx, o, time, o.kind === "gate" && state.gatePowered),
   }));
+  for (const frag of state.fragments) {
+    if (frag.collected) continue;
+    drawables.push({
+      y: frag.y,
+      draw: () => drawFragment(ctx, frag.x, frag.y, time, opts.reduceMotion),
+    });
+  }
   drawables.push({
     y: state.player.y + state.player.h,
     draw: () => drawPlayer(ctx, state.player, opts.reduceMotion),
@@ -269,7 +276,7 @@ function drawHedges(ctx: CanvasRenderingContext2D, w: number, h: number) {
   }
 }
 
-function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number) {
+function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number, powered = false) {
   const r = o.rect;
   switch (o.kind) {
     case "building": {
@@ -337,6 +344,22 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number)
       break;
     }
     case "gate": {
+      // warm glow once the workshop is powered
+      if (powered) {
+        const pulse = 0.5 + 0.5 * Math.sin(time / 400);
+        const g = ctx.createRadialGradient(
+          r.x + r.w / 2,
+          r.y + r.h / 2,
+          2,
+          r.x + r.w / 2,
+          r.y + r.h / 2,
+          34
+        );
+        g.addColorStop(0, `rgba(254,211,76,${0.22 + 0.12 * pulse})`);
+        g.addColorStop(1, "rgba(254,211,76,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(r.x + r.w / 2 - 34, r.y + r.h / 2 - 34, 68, 68);
+      }
       shadow(ctx, r.x + r.w / 2, r.y + r.h, r.w / 2, 3);
       // posts
       block(ctx, r.x, r.y, 6, r.h, C.woodDark);
@@ -349,10 +372,14 @@ function drawObject(ctx: CanvasRenderingContext2D, o: SceneObject, time: number)
       ctx.fillStyle = C.wood;
       ctx.fillRect(r.x + 6, r.y + 12, r.w - 12, 5);
       ctx.fillRect(r.x + 6, r.y + 24, r.w - 12, 5);
-      // hazard tape
+      // hazard tape, or a lit accent bar when powered
       for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = i % 2 ? C.outline : C.hazard;
+        ctx.fillStyle = powered ? C.accent : i % 2 ? C.outline : C.hazard;
         ctx.fillRect(r.x + 6 + i * 5, r.y + r.h - 6, 5, 3);
+      }
+      if (powered) {
+        ctx.fillStyle = C.accent;
+        ctx.fillRect(r.x + 6, r.y + 8, r.w - 12, 2); // lit lintel
       }
       break;
     }
@@ -557,6 +584,59 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, reduceMotion:
     ctx.fillRect(x + 1, y + 4, 2, 3);
     ctx.fillRect(x + SW - 3, y + 4, 2, 3);
   }
+}
+
+// A small glowing build fragment: a faceted accent crystal that hovers and
+// twinkles. Static (no bob/sparkle) under reduced motion.
+function drawFragment(
+  ctx: CanvasRenderingContext2D,
+  fx: number,
+  fy: number,
+  time: number,
+  reduceMotion: boolean
+) {
+  const bob = reduceMotion ? 0 : Math.round(Math.sin(time / 320) * 1.5);
+  const cx = Math.round(fx);
+  const cy = Math.round(fy) + bob;
+  const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(time / 260);
+
+  // soft glow halo
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 12);
+  g.addColorStop(0, `rgba(254,211,76,${0.22 + 0.18 * pulse})`);
+  g.addColorStop(1, "rgba(254,211,76,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - 12, cy - 12, 24, 24);
+
+  // resting shadow on the ground (doesn't bob)
+  ctx.fillStyle = "rgba(20,40,15,0.2)";
+  ctx.beginPath();
+  ctx.ellipse(fx, fy + 5, 3.5, 1.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // faceted crystal (diamond)
+  ctx.fillStyle = C.outline;
+  diamond(ctx, cx, cy, 5);
+  ctx.fillStyle = "#FED34C";
+  diamond(ctx, cx, cy, 4);
+  ctx.fillStyle = "#fff0bf";
+  diamond(ctx, cx - 1, cy - 1, 1.6); // highlight facet
+
+  // twinkle
+  if (!reduceMotion && pulse > 0.85) {
+    ctx.fillStyle = "#fff7da";
+    ctx.fillRect(cx + 4, cy - 6, 1, 1);
+    ctx.fillRect(cx - 6, cy + 2, 1, 1);
+  }
+}
+
+function diamond(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.lineTo(cx + r, cy);
+  ctx.lineTo(cx, cy + r);
+  ctx.lineTo(cx - r, cy);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function drawPromptMarker(ctx: CanvasRenderingContext2D, o: SceneObject, anim: number) {

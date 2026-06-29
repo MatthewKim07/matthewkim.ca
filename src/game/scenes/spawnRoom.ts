@@ -51,9 +51,9 @@ export const SPAWN_ROOM: Scene = {
         dialogue: {
           title: "workbench",
           lines: [
-            "The terminal on the workbench is still humming.",
-            "Most of what I make starts right here. Small tools, robots, half-ideas that grow into real ones.",
-            "A few of them even made it out past these walls.",
+            "the terminal blinks awake. it remembers every half-finished idea i've fed it.",
+            "this is where things start — small tools, robots, builds that outgrow the bench.",
+            "power's low, though. the whole place is running on one light.",
           ],
         },
       },
@@ -70,9 +70,9 @@ export const SPAWN_ROOM: Scene = {
         dialogue: {
           title: "notice board",
           lines: [
-            "Pinned notes, arrows, and one stubborn sketch of a robot arm.",
-            "I think by building. Sketch it, break it, work out why, try again.",
-            "Most of it won't pan out. That is sort of the point.",
+            "pinned notes, arrows, and one stubborn sketch of a robot arm.",
+            "i think by building. sketch it, break it, learn why, try again.",
+            "there's a list here — mostly things i haven't made yet.",
           ],
         },
       },
@@ -89,11 +89,19 @@ export const SPAWN_ROOM: Scene = {
         dialogue: {
           title: "the gate",
           lines: [
-            "A wooden gate, only half built. The road keeps going past it.",
-            "More of this world is still going up. Places I haven't finished yet.",
-            "Come back later. It will be here.",
+            "a half-built gate. the road keeps going past it.",
+            "more of this world is still going up. places i'm still figuring out.",
+            "it runs on fragments. find a few and it'll open.",
           ],
         },
+      },
+      poweredDialogue: {
+        title: "the gate",
+        lines: [
+          "the gate hums awake.",
+          "whatever is past it is still being built.",
+          "but now the workshop knows where to send you next.",
+        ],
       },
     },
 
@@ -123,5 +131,13 @@ export const SPAWN_ROOM: Scene = {
     { id: "bush-2", kind: "bush", rect: { x: 178, y: 170, w: 18, h: 14 } },
     { id: "flowers-1", kind: "flowers", rect: { x: 30, y: 174, w: 40, h: 20 } },
     { id: "flowers-2", kind: "flowers", rect: { x: 252, y: 176, w: 40, h: 18 } },
+  ],
+
+  // Three build fragments — visible but slightly exploratory: by the corner
+  // tree, beside the well, and up near the gate/building.
+  fragments: [
+    { id: "frag-1", x: 54, y: 158 },
+    { id: "frag-2", x: 242, y: 140 },
+    { id: "frag-3", x: 262, y: 92 },
   ],
 };
