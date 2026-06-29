@@ -76,6 +76,8 @@ export interface SceneObject {
   rect: Rect;
   /** Contributes to collision when true. */
   solid?: boolean;
+  /** Optional tighter collision box (defaults to `rect`); e.g. a tree trunk. */
+  collision?: Rect;
   /** Makes the object interactable. */
   interact?: {
     /** Proximity zone the player must overlap to interact. */

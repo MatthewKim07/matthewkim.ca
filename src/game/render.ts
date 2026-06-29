@@ -69,10 +69,19 @@ const C = {
   shadow: "rgba(20,40,15,0.22)",
 };
 
+// Transient pickup / power-up bursts, owned by the host and drawn on top.
+export interface PickupEffect {
+  x: number;
+  y: number;
+  start: number; // performance.now() when spawned
+  kind: "fragment" | "gate";
+}
+
 export interface RenderOptions {
   reduceMotion: boolean;
   dpr: number;
   showPrompt: boolean;
+  effects?: PickupEffect[];
   camera?: Vec2;
 }
 
@@ -132,6 +141,7 @@ export function renderScene(
   drawGrass(ctx, scene.width, scene.height);
   for (const p of scene.terrain) drawTerrain(ctx, p, time);
   drawHedges(ctx, scene.width, scene.height);
+  if (state.gatePowered) drawPoweredPath(ctx, scene, time);
 
   // Depth sort objects, fragments, and player by foot Y so overlaps look right.
   type Drawable = { y: number; draw: () => void };
@@ -158,8 +168,57 @@ export function renderScene(
     if (obj) drawPromptMarker(ctx, obj, state.player.anim);
   }
 
+  if (opts.effects) {
+    for (const e of opts.effects) drawPickupEffect(ctx, e, time);
+  }
+
   drawAmbientLight(ctx, scene.width, scene.height);
   ctx.restore();
+}
+
+// Accent dashes travelling along the road toward the gate once it is powered.
+function drawPoweredPath(ctx: CanvasRenderingContext2D, scene: GameState["scene"], time: number) {
+  const gate = scene.objects.find((o) => o.kind === "gate");
+  if (!gate) return;
+  const y = 130;
+  const x0 = 150;
+  const x1 = gate.rect.x - 4;
+  const flow = (time / 90) % 16;
+  for (let x = x0; x < x1; x += 16) {
+    const dx = x + flow;
+    if (dx > x1) continue;
+    const a = 0.12 + 0.1 * Math.sin((dx - time / 120) * 0.4);
+    ctx.fillStyle = `rgba(254,211,76,${Math.max(0, a)})`;
+    ctx.fillRect(dx, y, 8, 2);
+  }
+}
+
+// Expanding ring + rising sparkles when something is collected / powered.
+function drawPickupEffect(ctx: CanvasRenderingContext2D, e: PickupEffect, time: number) {
+  const dur = e.kind === "gate" ? 700 : 460;
+  const p = (time - e.start) / dur;
+  if (p < 0 || p > 1) return;
+  const ease = 1 - Math.pow(1 - p, 2);
+  const maxR = e.kind === "gate" ? 30 : 14;
+  const r = 3 + ease * maxR;
+  const a = (1 - p) * 0.9;
+
+  ctx.strokeStyle = `rgba(254,211,76,${a})`;
+  ctx.lineWidth = e.kind === "gate" ? 2 : 1.5;
+  ctx.beginPath();
+  ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // a few sparks flying out + up
+  const sparks = e.kind === "gate" ? 8 : 5;
+  ctx.fillStyle = `rgba(255,240,191,${a})`;
+  for (let i = 0; i < sparks; i++) {
+    const ang = (i / sparks) * Math.PI * 2;
+    const d = ease * (maxR + 4);
+    const sx = e.x + Math.cos(ang) * d;
+    const sy = e.y + Math.sin(ang) * d - ease * 6;
+    ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+  }
 }
 
 function drawGrass(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -612,6 +671,13 @@ function drawFragment(
   ctx.beginPath();
   ctx.ellipse(fx, fy + 5, 3.5, 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // faint collectible ring on the ground (affordance)
+  ctx.strokeStyle = `rgba(254,211,76,${0.22 + 0.16 * pulse})`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(fx, fy + 5, 5, 2, 0, 0, Math.PI * 2);
+  ctx.stroke();
 
   // faceted crystal (diamond)
   ctx.fillStyle = C.outline;

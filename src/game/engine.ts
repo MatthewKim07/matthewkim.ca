@@ -47,7 +47,7 @@ function intersects(a: Rect, b: Rect): boolean {
 export function createGameState(scene: Scene): GameState {
   const solids = [
     ...scene.walls,
-    ...scene.objects.filter((o) => o.solid).map((o) => o.rect),
+    ...scene.objects.filter((o) => o.solid).map((o) => o.collision ?? o.rect),
   ];
   return {
     scene,

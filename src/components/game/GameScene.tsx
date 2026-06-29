@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { createGameState, step, type GameState } from "@/game/engine";
-import { renderScene } from "@/game/render";
+import { renderScene, type PickupEffect } from "@/game/render";
 import { createInput } from "@/game/input";
 import { SPAWN_ROOM } from "@/game/scenes/spawnRoom";
 import type { Dialogue, SceneObject } from "@/game/types";
@@ -31,6 +31,7 @@ export function GameScene({
   const rootRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
   const inputRef = useRef<ReturnType<typeof createInput> | null>(null);
+  const effectsRef = useRef<PickupEffect[]>([]);
 
   // Dialogue state mirrored into a ref so the keydown handler stays stable.
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
@@ -128,11 +129,31 @@ export function GameScene({
                 ? "fragment found — workshop awake"
                 : `fragment found — ${state.collected}/${TOTAL}`
             );
+            if (!reduceMotion) {
+              const f = state.fragments.find((fr) => fr.id === e.id);
+              if (f) effectsRef.current.push({ x: f.x, y: f.y, start: now, kind: "fragment" });
+            }
           } else if (e.type === "gate") {
             showToast("gate powered");
+            if (!reduceMotion) {
+              const g = state.scene.objects.find((o) => o.kind === "gate");
+              if (g) {
+                effectsRef.current.push({
+                  x: g.rect.x + g.rect.w / 2,
+                  y: g.rect.y + g.rect.h / 2,
+                  start: now,
+                  kind: "gate",
+                });
+              }
+            }
           }
         }
         state.events.length = 0;
+      }
+
+      // Expire finished pickup effects.
+      if (effectsRef.current.length) {
+        effectsRef.current = effectsRef.current.filter((e) => now - e.start < 760);
       }
 
       const showPrompt = !dialogueRef.current && state.nearestId !== null;
@@ -140,7 +161,7 @@ export function GameScene({
         prompt = showPrompt;
         setHasPrompt(showPrompt);
       }
-      renderScene(ctx, canvas, state, { reduceMotion, dpr, showPrompt });
+      renderScene(ctx, canvas, state, { reduceMotion, dpr, showPrompt, effects: effectsRef.current });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -236,16 +257,28 @@ export function GameScene({
         style={{ paddingTop: "max(0.85rem, env(safe-area-inset-top))" }}
       >
         <div
-          className="flex items-center gap-2 text-xs text-white/85"
-          style={{ textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}
+          className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1 text-xs text-white/85 backdrop-blur-sm"
+          style={{ textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
         >
-          <span aria-hidden className="inline-block h-1.5 w-1.5 rotate-45 bg-[#FED34C]" />
           {collected >= TOTAL ? (
-            <span className="text-[#FED34C]">workshop awake</span>
-          ) : (
-            <span>
-              fragments <span className="text-[#FED34C]">{collected}</span>/{TOTAL}
+            <span className="flex items-center gap-1.5 text-[#FED34C]">
+              <span aria-hidden className="inline-block h-1.5 w-1.5 rotate-45 bg-[#FED34C]" />
+              workshop awake
             </span>
+          ) : (
+            <>
+              <span>fragments</span>
+              <span aria-hidden className="flex items-center gap-1">
+                {Array.from({ length: TOTAL }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`inline-block h-1.5 w-1.5 rotate-45 transition-colors ${
+                      i < collected ? "bg-[#FED34C]" : "bg-white/25"
+                    }`}
+                  />
+                ))}
+              </span>
+            </>
           )}
         </div>
         <AnimatePresence>
@@ -265,11 +298,34 @@ export function GameScene({
       </div>
 
       {/* Proximity prompt. */}
-      {hasPrompt && !dialogue && (
-        <p className="pointer-events-none absolute inset-x-0 bottom-24 z-10 text-center text-[0.7rem] tracking-[0.15em] text-[#FED34C]">
-          {isTouch ? "tap the button" : "press E"}
-        </p>
-      )}
+      <AnimatePresence>
+        {hasPrompt && !dialogue && (
+          <motion.div
+            key="prompt"
+            initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="pointer-events-none absolute inset-x-0 bottom-28 z-10 flex justify-center"
+          >
+            <span className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm">
+              {isTouch ? (
+                "tap to interact"
+              ) : (
+                <>
+                  <kbd
+                    style={{ fontFamily: "inherit" }}
+                    className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded border border-white/40 px-1 text-[0.6rem] font-medium not-italic text-white"
+                  >
+                    E
+                  </kbd>
+                  interact
+                </>
+              )}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Touch controls. */}
       {isTouch && !dialogue && (

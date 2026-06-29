@@ -115,10 +115,10 @@ export const SPAWN_ROOM: Scene = {
     // --- well landmark ---
     { id: "well", kind: "well", rect: { x: 214, y: 150, w: 24, h: 24 }, solid: true },
 
-    // --- trees (solid) framing the courtyard ---
-    { id: "tree-1", kind: "tree", rect: { x: 18, y: 150, w: 28, h: 36 }, solid: true },
-    { id: "tree-2", kind: "tree", rect: { x: 284, y: 158, w: 26, h: 34 }, solid: true },
-    { id: "tree-3", kind: "tree", rect: { x: 206, y: 36, w: 24, h: 30 }, solid: true },
+    // --- trees (solid trunk only, so the canopy isn't sticky) ---
+    { id: "tree-1", kind: "tree", rect: { x: 18, y: 150, w: 28, h: 36 }, solid: true, collision: { x: 27, y: 176, w: 10, h: 9 } },
+    { id: "tree-2", kind: "tree", rect: { x: 284, y: 158, w: 26, h: 34 }, solid: true, collision: { x: 292, y: 182, w: 10, h: 9 } },
+    { id: "tree-3", kind: "tree", rect: { x: 206, y: 36, w: 24, h: 30 }, solid: true, collision: { x: 213, y: 58, w: 10, h: 7 } },
 
     // --- props ---
     { id: "barrel-1", kind: "barrel", rect: { x: 96, y: 150, w: 14, h: 16 }, solid: true },
