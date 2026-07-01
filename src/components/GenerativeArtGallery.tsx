@@ -100,7 +100,11 @@ function VideoModal({
 
       <motion.div
         ref={windowRef}
-        className="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-black/50"
+        className={`relative z-10 flex w-full flex-col overflow-hidden bg-[#1b1d24] shadow-[0_30px_90px_rgba(0,0,0,0.6)] ${
+          isFullscreen
+            ? "h-full w-full max-w-none rounded-none ring-0"
+            : "max-w-5xl rounded-xl ring-1 ring-black/50"
+        }`}
         initial={reduceMotion ? false : { scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={reduceMotion ? { opacity: 0 } : { scale: 0.98, opacity: 0 }}
@@ -108,7 +112,11 @@ function VideoModal({
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: "var(--font-sf)" }}
       >
-        <div className="relative flex h-8 shrink-0 items-center border-b border-black/40 bg-gradient-to-b from-[#30343d] to-[#272a32] px-3">
+        <div
+          className={`relative flex h-8 shrink-0 items-center border-b border-black/40 bg-gradient-to-b from-[#30343d] to-[#272a32] px-3 ${
+            isFullscreen ? "hidden" : ""
+          }`}
+        >
           <div className="group/lights flex items-center gap-2">
             <button
               ref={closeButtonRef}
@@ -161,7 +169,11 @@ function VideoModal({
           </span>
         </div>
 
-        <div className="relative aspect-video w-full overflow-hidden bg-black">
+        <div
+          className={`relative w-full overflow-hidden ${
+            isFullscreen ? "min-h-0 flex-1" : "aspect-video"
+          }`}
+        >
           <video
             src={src}
             autoPlay
@@ -169,7 +181,7 @@ function VideoModal({
             loop
             playsInline
             controls
-            className="h-full w-full object-contain"
+            className="block h-full w-full object-cover"
           />
         </div>
       </motion.div>
