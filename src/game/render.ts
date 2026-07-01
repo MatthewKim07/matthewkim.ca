@@ -66,7 +66,8 @@ const C = {
   // player
   pOut: "#23190f",
   skin: "#ecbd92",
-  hair: "#6f4c2c",
+  hair: "#15131a",
+  hairHi: "#2a241d",
   jacket: "#2f9b95",
   jacketDk: "#247a76",
   pants: "#3b4a6a",
@@ -123,11 +124,6 @@ function hexToRgb(hex: string): [number, number, number] {
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
-function noise(x: number, y: number) {
-  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-  return n - Math.floor(n);
-}
-
 // Flat / wall-mounted decor + floor cushions — drawn behind the actors so they
 // never occlude the player or Bubby. Tall props (bed, desk, bookshelf, record
 // player, vinyl crate, plant, door) depth-sort with the actors by foot Y.
@@ -149,6 +145,23 @@ function block(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.fillRect(x, y, w, h);
   ctx.fillStyle = fill;
   ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+}
+
+function limb(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  angle: number,
+  fill: string
+) {
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.rotate(angle);
+  ctx.fillStyle = fill;
+  ctx.fillRect(Math.round(-w / 2), 0, w, h);
+  ctx.restore();
 }
 
 function shadow(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number) {
@@ -910,67 +923,88 @@ function drawFragment(ctx: CanvasRenderingContext2D, f: Fragment, time: number, 
 function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, reduceMotion: boolean) {
   const SW = 14;
   const SH = 22;
-  const bob = !reduceMotion && p.moving ? Math.round(Math.sin(p.anim * 11)) : 0;
-  const stepPhase = Math.floor(p.anim * 8) % 2;
+  const swing = !reduceMotion && p.moving ? Math.sin(p.anim * Math.PI * 4) : 0;
+  const hop = !reduceMotion && p.moving && Math.abs(swing) > 0.75 ? -1 : 0;
+  const legAngle = swing * 0.46;
   const x = Math.round(p.x + p.w / 2 - SW / 2);
   const feetY = Math.round(p.y + p.h);
-  const y = feetY - SH + bob;
+  const y = feetY - SH + hop;
   const f = p.facing;
+  const sideFacing = f === "left" ? -1 : 1;
 
   shadow(ctx, p.x + p.w / 2, feetY - 1, 7, 2.5);
-  ctx.fillStyle = C.pOut;
-  ctx.fillRect(x + 1, y + 1, SW - 2, SH - 3);
 
-  ctx.fillStyle = C.boots;
-  const legY = y + SH - 5;
-  if (p.moving && !reduceMotion) {
-    ctx.fillRect(x + 3, legY - stepPhase, 3, 5);
-    ctx.fillRect(x + SW - 6, legY - (1 - stepPhase), 3, 5);
+  // Minecraft-style block legs, matching the title-screen preview.
+  if (f === "left" || f === "right") {
+    limb(ctx, x + 5.5, y + 14, 3, 7, sideFacing * legAngle, C.pants);
+    limb(ctx, x + 7.5, y + 14, 3, 7, -sideFacing * legAngle, C.navy);
   } else {
-    ctx.fillRect(x + 3, legY, 3, 5);
-    ctx.fillRect(x + SW - 6, legY, 3, 5);
+    const liftA = swing > 0 ? -1 : 0;
+    const liftB = swing < 0 ? -1 : 0;
+    ctx.fillStyle = C.pants;
+    ctx.fillRect(x + 4, y + 14 + liftA, 3, 7);
+    ctx.fillStyle = C.navy;
+    ctx.fillRect(x + 7, y + 14 + liftB, 3, 7);
   }
-  ctx.fillStyle = C.pants;
-  ctx.fillRect(x + 3, y + 15, SW - 6, 4);
 
   if (f === "up") {
     ctx.fillStyle = C.packDk;
-    ctx.fillRect(x + 2, y + 8, SW - 4, 8);
+    ctx.fillRect(x + 3, y + 8, 8, 7);
     ctx.fillStyle = C.pack;
-    ctx.fillRect(x + 3, y + 9, SW - 6, 5);
+    ctx.fillRect(x + 4, y + 9, 6, 4);
   }
+
   ctx.fillStyle = C.jacket;
-  ctx.fillRect(x + 2, y + 8, SW - 4, 8);
+  ctx.fillRect(x + 3, y + 8, 7, 6);
   ctx.fillStyle = C.jacketDk;
-  ctx.fillRect(x + 2, y + 8, 3, 8);
+  ctx.fillRect(x + 3, y + 8, 1, 6);
+  ctx.fillRect(x + 3, y + 13, 7, 2);
+
   if (f === "down") {
     ctx.fillStyle = C.pack;
     ctx.fillRect(x + 4, y + 9, 1, 6);
     ctx.fillRect(x + SW - 5, y + 9, 1, 6);
   }
-  ctx.fillStyle = C.hair;
-  ctx.fillRect(x + 2, y + 1, SW - 4, 7);
-  if (f === "down") {
-    ctx.fillStyle = C.skin;
-    ctx.fillRect(x + 3, y + 4, SW - 6, 4);
-    ctx.fillStyle = C.pOut;
-    ctx.fillRect(x + 4, y + 5, 2, 2);
-    ctx.fillRect(x + SW - 6, y + 5, 2, 2);
-  } else if (f === "left") {
-    ctx.fillStyle = C.skin;
-    ctx.fillRect(x + 2, y + 4, 5, 4);
-    ctx.fillStyle = C.pOut;
-    ctx.fillRect(x + 3, y + 5, 2, 2);
-  } else if (f === "right") {
-    ctx.fillStyle = C.skin;
-    ctx.fillRect(x + SW - 7, y + 4, 5, 4);
-    ctx.fillStyle = C.pOut;
-    ctx.fillRect(x + SW - 5, y + 5, 2, 2);
+  // Black layered hair, closer to the preview sprite and reference.
+  ctx.fillStyle = C.skin;
+  if (f === "up") {
+    ctx.fillStyle = C.hair;
+    ctx.fillRect(x + 3, y + 1, 8, 7);
+    ctx.fillStyle = C.hairHi;
+    ctx.fillRect(x + 4, y, 5, 2);
+    ctx.fillRect(x + 6, y - 1, 2, 1);
+  } else {
+    ctx.fillRect(x + 4, y + 3, 6, 5);
+    ctx.fillStyle = C.hair;
+    ctx.fillRect(x + 3, y + 1, 8, 4);
+    ctx.fillRect(x + 2, y + 3, 2, 3);
+    ctx.fillRect(x + 9, y + 2, 2, 3);
+    ctx.fillStyle = C.hairHi;
+    ctx.fillRect(x + 4, y, 5, 2);
+    ctx.fillRect(x + 6, y - 1, 2, 1);
+    ctx.fillRect(x + 4, y + 4, 2, 1);
   }
+
+  if (f === "down") {
+    ctx.fillStyle = C.pOut;
+    ctx.fillRect(x + 5, y + 5, 1, 1);
+    ctx.fillRect(x + 9, y + 5, 1, 1);
+    ctx.fillStyle = "#b97863";
+    ctx.fillRect(x + 7, y + 7, 2, 1);
+  } else if (f === "left") {
+    ctx.fillStyle = C.pOut;
+    ctx.fillRect(x + 5, y + 5, 1, 1);
+  } else if (f === "right") {
+    ctx.fillStyle = C.pOut;
+    ctx.fillRect(x + 9, y + 5, 1, 1);
+  }
+
   if (f !== "up") {
-    ctx.fillStyle = C.accent;
-    ctx.fillRect(x + 1, y + 4, 2, 3);
-    ctx.fillRect(x + SW - 3, y + 4, 2, 3);
+    // Low arm swing, opposite the legs. Keep it subtle for readability.
+    const armStep = swing >= 0 ? 1 : 0;
+    ctx.fillStyle = C.skin;
+    ctx.fillRect(x + 1, y + 10 + armStep, 2, 2);
+    ctx.fillRect(x + 10, y + 10 + (1 - armStep), 2, 2);
   }
 }
 
@@ -988,34 +1022,6 @@ function drawBubbyCue(ctx: CanvasRenderingContext2D, cx: number, cy: number, tex
   ctx.globalAlpha = 1;
 }
 
-function disc(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, col: string) {
-  ctx.fillStyle = col;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-// Curl texture: scatter little fluff circles in two tones to read as a curly
-// coat. Deterministic so it doesn't shimmer.
-function curls(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  rx: number,
-  ry: number,
-  hi: string,
-  lo: string,
-  seed: number
-) {
-  for (let i = 0; i < 9; i++) {
-    const a = noise(seed + i, seed - i);
-    const b = noise(seed - i * 2, seed + i * 3);
-    const px = cx + (a - 0.5) * rx * 2;
-    const py = cy + (b - 0.5) * ry * 2;
-    disc(ctx, px, py, 1.4, (i + seed) % 2 ? hi : lo);
-  }
-}
-
 // Bubby: a fluffy black toy poodle, drawn from a soft 3/4 angle so his face
 // reads. Rests on his bed; trots out to point at things when petted.
 function drawBubby(ctx: CanvasRenderingContext2D, bubby: BubbyRender, time: number, reduceMotion: boolean) {
@@ -1024,9 +1030,9 @@ function drawBubby(ctx: CanvasRenderingContext2D, bubby: BubbyRender, time: numb
   const happy = bubby.phase === "pointing" || bubby.phase === "waking" || moving;
   const f = bubby.facing;
 
-  const COAT = "#211f28";
-  const COAT_HI = "#34313e";
-  const COAT_SH = "#131119";
+  const COAT = "#2d2a33";
+  const COAT_HI = "#3b3743";
+  const COAT_SH = "#15131a";
   const OUT = "#0c0b11";
   const NOSE = "#070608";
   const TONGUE = "#e07690";
@@ -1034,115 +1040,101 @@ function drawBubby(ctx: CanvasRenderingContext2D, bubby: BubbyRender, time: numb
 
   let oy = 0;
   if (!reduceMotion) {
-    if (moving) oy = -Math.abs(Math.sin(time / 90)) * 2;
+    if (moving) oy = -Math.abs(Math.sin(time / 140));
     else if (resting) oy = Math.sin(time / 620);
   }
   const bx = Math.round(bubby.x);
   const by = Math.round(bubby.y + oy);
+  const side = f === "left" ? -1 : f === "right" ? 1 : 1;
+  const ear = moving && !reduceMotion && Math.sin(time / 180) > 0 ? 1 : 0;
+  const step = moving && !reduceMotion && Math.sin(time / 150) > 0 ? 1 : 0;
+  const wag = happy && !reduceMotion ? Math.round(Math.sin(time / 160)) : 0;
 
   shadow(ctx, bubby.x, bubby.y + 6, 6, 2);
 
-  // --- fluffy legs + paws ---
+  // Preview-style block paws first, tucked under the body.
   if (!resting) {
-    const step = moving && !reduceMotion ? (Math.sin(time / 90) > 0 ? 1 : 0) : 0;
-    const legs = [-4, -1.3, 1.3, 4];
-    for (let i = 0; i < legs.length; i++) {
-      const lx = bx + legs[i];
-      const lift = i % 2 === 0 ? step : 1 - step;
-      disc(ctx, lx, by + 4, 1.7, OUT);
-      disc(ctx, lx, by + 4, 1.2, COAT);
-      disc(ctx, lx, by + 6 - lift, 1.6, OUT); // paw tuft
-      disc(ctx, lx, by + 6 - lift, 1.1, COAT);
-    }
+    ctx.fillStyle = OUT;
+    ctx.fillRect(bx - 4, by + 5 - step, 2, 3);
+    ctx.fillRect(bx + 3, by + 5 - (1 - step), 2, 3);
+    ctx.fillStyle = COAT;
+    ctx.fillRect(bx - 3, by + 5 - step, 1, 2);
+    ctx.fillRect(bx + 4, by + 5 - (1 - step), 1, 2);
   }
 
-  // --- slim fluffy tail (raised, wags) ---
-  const wag = !reduceMotion && (happy || moving) ? Math.sin(time / 60) * 2.5 : 0;
-  const tx = bx - 5;
-  const ty = by - 5 + wag;
-  disc(ctx, tx, ty, 2.2, OUT);
-  disc(ctx, tx, ty, 1.5, COAT);
-  curls(ctx, tx, ty, 1.2, 1.8, COAT_HI, COAT_SH, 7);
-
-  // --- body (compact + fluffy, sits over the legs) ---
+  // Attached wavy tail, not a detached puff.
   ctx.fillStyle = OUT;
-  ctx.beginPath();
-  ctx.ellipse(bx, by + 1, 6, 4.4, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillRect(bx - 7, by + 1, 3, 2);
+  ctx.fillRect(bx - 9, by + wag, 3, 2);
   ctx.fillStyle = COAT;
-  ctx.beginPath();
-  ctx.ellipse(bx, by + 1, 5, 3.6, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillRect(bx - 7, by + 1, 2, 1);
+  ctx.fillRect(bx - 9, by + wag, 2, 1);
+
+  // Blocky horizontal body, directly based on the preview dog.
+  ctx.fillStyle = OUT;
+  ctx.fillRect(bx - 6, by - 1, 12, 8);
+  ctx.fillStyle = COAT;
+  ctx.fillRect(bx - 5, by, 10, 6);
   ctx.fillStyle = COAT_SH;
-  ctx.beginPath();
-  ctx.ellipse(bx, by + 2.4, 4, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  curls(ctx, bx, by + 1, 4.5, 3, COAT_HI, COAT_SH, 3);
+  ctx.fillRect(bx - 5, by + 4, 5, 2);
+  ctx.fillStyle = COAT_HI;
+  ctx.fillRect(bx - 3, by + 1, 5, 1);
 
-  // --- head + tucked curly ears ---
-  const hx = bx + (f === "left" ? -1.5 : f === "right" ? 1.5 : 0);
+  // Block head and simple fluffy ears.
+  const hx = bx + (f === "left" ? -3 : f === "right" ? 3 : 1);
   const hy = by - 5;
-  for (const side of [-1, 1]) {
-    const ex = hx + side * 4.2;
-    disc(ctx, ex, hy + 2, 2.2, OUT);
-    disc(ctx, ex, hy + 2, 1.6, COAT);
-    disc(ctx, ex - side * 0.5, hy + 4.5, 1.8, OUT);
-    disc(ctx, ex - side * 0.5, hy + 4.5, 1.3, COAT);
-    curls(ctx, ex, hy + 3, 1, 2, COAT_HI, COAT_SH, side === 1 ? 11 : 17);
-  }
-  disc(ctx, hx, hy, 4.5, OUT);
-  disc(ctx, hx, hy, 3.6, COAT);
-  // small topknot fluff
-  disc(ctx, hx - 1.4, hy - 3.4, 1.6, OUT);
-  disc(ctx, hx + 1.4, hy - 3.4, 1.6, OUT);
-  disc(ctx, hx - 1.4, hy - 3.4, 1.1, COAT_HI);
-  disc(ctx, hx + 1.4, hy - 3.4, 1.1, COAT);
-  curls(ctx, hx, hy - 1, 3.2, 2.6, COAT_HI, COAT_SH, 23);
+  ctx.fillStyle = OUT;
+  ctx.fillRect(hx - 4, hy, 8, 7);
+  ctx.fillRect(hx - (side > 0 ? 5 : -3), hy + 2 + ear, 3, 5);
+  ctx.fillRect(hx + (side > 0 ? 3 : -5), hy + 2 + (ear ? 0 : 1), 3, 5);
+  ctx.fillStyle = COAT;
+  ctx.fillRect(hx - 3, hy + 1, 6, 5);
+  ctx.fillRect(hx - (side > 0 ? 4 : -2), hy + 3 + ear, 2, 3);
+  ctx.fillRect(hx + (side > 0 ? 4 : -4), hy + 3 + (ear ? 0 : 1), 2, 3);
+  ctx.fillStyle = COAT_HI;
+  ctx.fillRect(hx - 2, hy + 2, 3, 1);
+  ctx.fillStyle = OUT;
+  ctx.fillRect(hx - 1, hy - 1, 2, 2);
 
-  // --- face ---
+  // Minimal readable face.
   if (f !== "up") {
     const eo = f === "left" ? -1 : f === "right" ? 1 : 0;
-    const ex1 = hx - 1.8 + eo;
-    const ex2 = hx + 1.8 + eo;
-    const ey = hy - 0.3;
+    const ex1 = hx - 1 + eo;
+    const ex2 = hx + 2 + eo;
+    const ey = hy + 2;
     if (resting) {
-      // closed, sleeping eyes — tiny dark lash dashes
       ctx.fillStyle = COAT_SH;
-      ctx.fillRect(Math.round(ex1) - 1, Math.round(ey), 2, 1);
-      ctx.fillRect(Math.round(ex2) - 1, Math.round(ey), 2, 1);
+      ctx.fillRect(ex1 - 1, ey, 2, 1);
+      ctx.fillRect(ex2 - 1, ey, 2, 1);
     } else {
-      // simple flat shiny-dot eyes (a soft socket + a 1px glint), no white sclera
-      ctx.fillStyle = COAT_SH;
-      ctx.fillRect(Math.round(ex1) - 1, Math.round(ey) - 1, 2, 2);
-      ctx.fillRect(Math.round(ex2) - 1, Math.round(ey) - 1, 2, 2);
-      ctx.fillStyle = "#aeb4c2";
-      ctx.fillRect(Math.round(ex1), Math.round(ey) - 1, 1, 1);
-      ctx.fillRect(Math.round(ex2), Math.round(ey) - 1, 1, 1);
+      ctx.fillStyle = "#f2f0e8";
+      ctx.fillRect(ex1, ey - 1, 1, 1);
+      ctx.fillRect(ex2, ey - 1, 1, 1);
+      ctx.fillStyle = NOSE;
+      ctx.fillRect(ex1, ey, 1, 1);
+      ctx.fillRect(ex2, ey, 1, 1);
     }
-    // muzzle + shiny nose
-    const mx = hx + eo * 0.5;
-    const my = hy + 2;
-    disc(ctx, mx, my - 0.4, 1.7, COAT_HI);
-    disc(ctx, mx, my, 1.1, NOSE);
+    const mx = Math.round(hx + eo);
+    const my = hy + 4;
+    ctx.fillStyle = COAT_HI;
+    ctx.fillRect(mx - 1, my, 3, 1);
+    ctx.fillStyle = NOSE;
+    ctx.fillRect(mx + 1, my, 1, 1);
     ctx.fillStyle = "#5b5866";
-    ctx.fillRect(Math.round(mx) - 1, Math.round(my) - 1, 1, 1);
-    // happy pink tongue
+    ctx.fillRect(mx, my, 1, 1);
     if (happy) {
       ctx.fillStyle = TONGUE;
-      ctx.fillRect(Math.round(mx) - 1, Math.round(my) + 1, 2, 2);
+      ctx.fillRect(mx, my + 1, 2, 2);
       ctx.fillStyle = TONGUE_SH;
-      ctx.fillRect(Math.round(mx), Math.round(my) + 2, 1, 1);
+      ctx.fillRect(mx + 1, my + 2, 1, 1);
     }
-  } else {
-    // facing away: just fluff
-    curls(ctx, hx, hy, 3, 2.4, COAT_HI, COAT_SH, 29);
   }
 
-  // accent collar peeking under the chin
+  // Accent collar peeking under the chin.
   ctx.fillStyle = C.accent;
-  ctx.fillRect(hx - 2, hy + 3, 4, 1);
+  ctx.fillRect(hx - 2, hy + 6, 4, 1);
   ctx.fillStyle = C.accentDk;
-  ctx.fillRect(hx, hy + 3, 1, 1);
+  ctx.fillRect(hx, hy + 6, 1, 1);
 
   // sleepy "z" while resting
   if (resting && !reduceMotion) {
