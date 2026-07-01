@@ -62,11 +62,11 @@ export default function Home() {
         <TrailControls />
       </div>
       <div
-        className="text-center text-6xl md:text-8xl pt-16 pb-4 text-gray-900 dark:text-white cursor-default select-none"
+        className="text-center text-6xl md:text-8xl pt-16 pb-4 text-site-ink dark:text-site-paper cursor-default select-none"
       >
         <AnimatedTitleWrapper
           fontFamily="var(--font-milker)"
-          className="text-center text-6xl md:text-8xl text-gray-900 dark:text-white cursor-default select-none"
+          className="text-center text-6xl md:text-8xl text-site-ink dark:text-site-paper cursor-default select-none"
         />
       </div>
       <div className="relative max-w-xl mx-auto px-8 pt-2 pb-12 text-center select-none">
@@ -129,9 +129,12 @@ export default function Home() {
       <GenerativeArtGallery />
       <TechStack />
       <footer className="relative mt-24" style={{ fontFamily: "var(--font-sf)" }}>
-        <div className="relative bg-gray-900 dark:bg-white px-8 py-10 flex flex-col items-center gap-8">
+        <div className="relative bg-site-ink dark:bg-site-paper px-8 py-10 flex flex-col items-center gap-8">
           <QuoteOfTheDay variant="footer" />
-          <BubbyGif />
+          <div className="flex flex-col items-center gap-4">
+            <BubbyGif />
+            <MatthewExeLauncher />
+          </div>
           <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
           <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
             <EmailLink email="matthewminchulkim@gmail.com" className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-red-600 dark:bg-gray-900/10 dark:text-gray-900 dark:hover:bg-red-600 dark:hover:text-white transition-colors">
@@ -149,7 +152,6 @@ export default function Home() {
             </SoundLink>
           </div>
         </div>
-        <MatthewExeLauncher />
       </footer>
     </div>
   );
