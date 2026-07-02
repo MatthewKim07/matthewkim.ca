@@ -124,21 +124,21 @@ function hexToRgb(hex: string): [number, number, number] {
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
-// Flat / wall-mounted decor + floor cushions — drawn behind the actors so they
-// never occlude the player or Bubby. Tall props (bed, desk, bookshelf, record
-// player, vinyl crate, plant, door) depth-sort with the actors by foot Y.
+// Flat / wall-mounted decor + floor clutter — drawn behind the actors so they
+// never occlude the player. Tall props (bed, desk, bookshelf, record player,
+// vinyl crate, plant, door, beanbag, etc.) depth-sort with the actors by foot Y.
 const BACKGROUND_KINDS = new Set<SceneObject["kind"]>([
   "window",
   "stringlights",
   "poster",
   "clock",
-  "lamp",
-  "corkboard",
-  "snackshelf",
-  "hoop",
-  "bubbybed",
-  "beanbag",
+  "slippers",
 ]);
+
+function objectFootY(o: SceneObject): number {
+  const rect = o.collision ?? o.rect;
+  return rect.y + rect.h;
+}
 
 function block(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) {
   ctx.fillStyle = C.outline;
@@ -214,7 +214,7 @@ export function renderScene(
   const drawables: Drawable[] = scene.objects
     .filter((o) => !BACKGROUND_KINDS.has(o.kind))
     .map((o) => ({
-      y: o.rect.y + o.rect.h,
+      y: objectFootY(o),
       draw: () => drawObject(ctx, o, time, o.kind === "door" && state.gatePowered),
     }));
   for (const frag of state.fragments) {

@@ -48,15 +48,22 @@ export const SPAWN_ROOM: Scene = {
     { id: "bed", kind: "bed", rect: { x: 20, y: 22, w: 52, h: 44 }, solid: true },
 
     // --- bedside lamp + beanbag + floor slippers (life) ---
-    { id: "lamp", kind: "lamp", rect: { x: 76, y: 40, w: 8, h: 24 } },
-    { id: "beanbag", kind: "beanbag", rect: { x: 150, y: 118, w: 24, h: 18 } },
-    { id: "slippers", kind: "slippers", rect: { x: 120, y: 150, w: 16, h: 8 } },
+    {
+      id: "lamp",
+      kind: "lamp",
+      rect: { x: 76, y: 40, w: 8, h: 24 },
+      solid: true,
+      collision: { x: 74, y: 54, w: 12, h: 10 },
+    },
+    { id: "beanbag", kind: "beanbag", rect: { x: 150, y: 118, w: 24, h: 18 }, solid: true },
+    { id: "slippers", kind: "slippers", rect: { x: 120, y: 150, w: 16, h: 8 }, solid: false },
 
     // --- travel corkboard (interactable, left wall) ---
     {
       id: "corkboard",
       kind: "corkboard",
       rect: { x: 16, y: 62, w: 18, h: 48 },
+      solid: true,
       interact: {
         zone: { x: 34, y: 72, w: 24, h: 34 },
         dialogue: {
@@ -70,7 +77,13 @@ export const SPAWN_ROOM: Scene = {
     },
 
     // --- bookshelf (left wall) ---
-    { id: "bookshelf", kind: "bookshelf", rect: { x: 18, y: 120, w: 16, h: 42 }, solid: true },
+    {
+      id: "bookshelf",
+      kind: "bookshelf",
+      rect: { x: 18, y: 120, w: 16, h: 42 },
+      solid: true,
+      collision: { x: 17, y: 118, w: 20, h: 44 },
+    },
 
     // --- desk + laptop (interactable, top-right) ---
     { id: "desk", kind: "desk", rect: { x: 166, y: 22, w: 62, h: 24 }, solid: true },
@@ -96,6 +109,7 @@ export const SPAWN_ROOM: Scene = {
       id: "snackshelf",
       kind: "snackshelf",
       rect: { x: 226, y: 58, w: 14, h: 20 },
+      solid: true,
       interact: {
         zone: { x: 208, y: 60, w: 18, h: 18 },
         dialogue: {
@@ -110,6 +124,7 @@ export const SPAWN_ROOM: Scene = {
       id: "hoop",
       kind: "hoop",
       rect: { x: 224, y: 104, w: 16, h: 14 },
+      solid: true,
       interact: {
         zone: { x: 214, y: 120, w: 28, h: 20 },
         dialogue: {
@@ -148,6 +163,7 @@ export const SPAWN_ROOM: Scene = {
       id: "bubbybed",
       kind: "bubbybed",
       rect: { x: 198, y: 150, w: 32, h: 20 },
+      solid: true,
       interact: {
         zone: { x: 196, y: 134, w: 36, h: 16 },
         // Petting is handled in the host (a reaction, not a dialogue box); this

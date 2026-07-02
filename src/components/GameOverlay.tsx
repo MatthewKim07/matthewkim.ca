@@ -4,14 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useGame } from "@/context/GameContext";
+import { AvatarTestScene } from "@/components/game/AvatarTestScene";
 import { GameScene } from "@/components/game/GameScene";
+import { RoomPrototypeScene } from "@/components/game/RoomPrototypeScene";
 import { OverworldTitleBackdrop } from "@/components/game/OverworldTitleBackdrop";
 
 // Full-screen hidden-game overlay. Opens into the polished boot shell; Start
 // switches into the playable scene. Accent color (#FED34C) matches the trigger.
 
 type View = "menu" | "controls";
-type Mode = "shell" | "scene";
+type Mode = "shell" | "scene" | "avatar-test" | "room-proto";
 
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
@@ -58,11 +60,15 @@ function ControlRow({ label, keys }: { label: string; keys: string }) {
 // resets without a setState-in-effect.
 function ShellContent({
   onStart,
+  onAvatarTest,
+  onRoomProto,
   close,
   reduceMotion,
   dialogRef,
 }: {
   onStart: () => void;
+  onAvatarTest: () => void;
+  onRoomProto: () => void;
   close: () => void;
   reduceMotion: boolean;
   dialogRef: React.RefObject<HTMLDivElement | null>;
@@ -136,6 +142,20 @@ function ShellContent({
                   start
                 </MenuLink>
                 <MenuLink onClick={() => setView("controls")}>controls</MenuLink>
+                <button
+                  type="button"
+                  onClick={onAvatarTest}
+                  className="mt-2 text-[0.7rem] tracking-wide text-white/35 transition-colors hover:text-[#FED34C] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FED34C]"
+                >
+                  dev · 3d avatar test
+                </button>
+                <button
+                  type="button"
+                  onClick={onRoomProto}
+                  className="text-[0.7rem] tracking-wide text-white/35 transition-colors hover:text-[#FED34C] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FED34C]"
+                >
+                  dev · 3d room prototype
+                </button>
               </div>
             </motion.div>
           )}
@@ -190,16 +210,28 @@ function OverlayBody({
 }) {
   const [mode, setMode] = useState<Mode>("shell");
 
-  return mode === "shell" ? (
-    <ShellContent
-      onStart={() => setMode("scene")}
-      close={close}
-      reduceMotion={reduceMotion}
-      dialogRef={dialogRef}
-    />
-  ) : (
-    <GameScene onMenu={() => setMode("shell")} reduceMotion={reduceMotion} />
-  );
+  if (mode === "shell") {
+    return (
+      <ShellContent
+        onStart={() => setMode("scene")}
+        onAvatarTest={() => setMode("avatar-test")}
+        onRoomProto={() => setMode("room-proto")}
+        close={close}
+        reduceMotion={reduceMotion}
+        dialogRef={dialogRef}
+      />
+    );
+  }
+
+  if (mode === "avatar-test") {
+    return <AvatarTestScene onMenu={() => setMode("shell")} />;
+  }
+
+  if (mode === "room-proto") {
+    return <RoomPrototypeScene onMenu={() => setMode("shell")} />;
+  }
+
+  return <GameScene onMenu={() => setMode("shell")} reduceMotion={reduceMotion} />;
 }
 
 const WIN_MIN_W = 380;

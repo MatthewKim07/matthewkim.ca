@@ -81,7 +81,7 @@ export interface SceneObject {
   kind: SceneObjectKind;
   /** Draw footprint in world pixels. */
   rect: Rect;
-  /** Contributes to collision when true. */
+  /** Contributes to collision when true. Omitted kinds may still block via engine defaults. Set false to opt out. */
   solid?: boolean;
   /** Optional tighter collision box (defaults to `rect`); e.g. a tree trunk. */
   collision?: Rect;

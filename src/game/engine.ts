@@ -1,4 +1,4 @@
-import type { Facing, InputIntent, Rect, Scene } from "@/game/types";
+import type { Facing, InputIntent, Rect, Scene, SceneObject } from "@/game/types";
 
 // Lightweight, pure-ish game logic. No DOM, no canvas — just state mutation so
 // the React host can drive it from a RAF loop and the renderer can read it.
@@ -6,6 +6,55 @@ import type { Facing, InputIntent, Rect, Scene } from "@/game/types";
 const SPEED = 82; // player movement, world px/sec
 const PLAYER_W = 12;
 const PLAYER_H = 14;
+
+/** Props that block the floor plan unless explicitly opted out. */
+const BLOCKING_KINDS = new Set<SceneObject["kind"]>([
+  "bed",
+  "bookshelf",
+  "desk",
+  "chair",
+  "lamp",
+  "beanbag",
+  "corkboard",
+  "snackshelf",
+  "hoop",
+  "recordplayer",
+  "vinylcrate",
+  "bubbybed",
+  "plant",
+  "door",
+]);
+
+function objectSolidRect(o: SceneObject): Rect | null {
+  if (o.solid === false) return null;
+  if (o.collision) return o.collision;
+  if (o.solid || BLOCKING_KINDS.has(o.kind)) return o.rect;
+  return null;
+}
+
+function resolveAxis(p: Rect, solids: Rect[], axis: "x" | "y", delta: number): void {
+  if (delta === 0) return;
+  if (axis === "x") p.x += delta;
+  else p.y += delta;
+
+  // A few passes so corners and stacked solids don't let the player slip through.
+  for (let pass = 0; pass < 4; pass++) {
+    let hit = false;
+    for (const s of solids) {
+      if (!intersects(p, s)) continue;
+      hit = true;
+      if (axis === "x") {
+        if (delta > 0) p.x = s.x - p.w;
+        else if (delta < 0) p.x = s.x + s.w;
+      } else if (delta > 0) {
+        p.y = s.y - p.h;
+      } else if (delta < 0) {
+        p.y = s.y + s.h;
+      }
+    }
+    if (!hit) break;
+  }
+}
 
 export interface PlayerState {
   x: number;
@@ -47,7 +96,9 @@ function intersects(a: Rect, b: Rect): boolean {
 export function createGameState(scene: Scene): GameState {
   const solids = [
     ...scene.walls,
-    ...scene.objects.filter((o) => o.solid).map((o) => o.collision ?? o.rect),
+    ...scene.objects
+      .map(objectSolidRect)
+      .filter((rect): rect is Rect => rect !== null),
   ];
   return {
     scene,
@@ -85,21 +136,9 @@ export function step(state: GameState, intent: InputIntent, dt: number): void {
   const moveY = dy * SPEED * dt;
 
   // X axis.
-  p.x += moveX;
-  for (const s of state.solids) {
-    if (intersects(p, s)) {
-      if (moveX > 0) p.x = s.x - p.w;
-      else if (moveX < 0) p.x = s.x + s.w;
-    }
-  }
+  resolveAxis(p, state.solids, "x", moveX);
   // Y axis.
-  p.y += moveY;
-  for (const s of state.solids) {
-    if (intersects(p, s)) {
-      if (moveY > 0) p.y = s.y - p.h;
-      else if (moveY < 0) p.y = s.y + s.h;
-    }
-  }
+  resolveAxis(p, state.solids, "y", moveY);
 
   // Facing follows the dominant input axis.
   if (Math.abs(intent.dx) > Math.abs(intent.dy)) {
