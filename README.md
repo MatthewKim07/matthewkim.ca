@@ -28,13 +28,29 @@ A personal portfolio built to feel handcrafted — minimal on the surface, with 
 | 🖱️ | A cursor image trail with live controls, plus light/dark theme toggle |
 | 📜 | A public-domain quote in the footer, with its author, that changes every day |
 | 🎵 | A playlist easter egg and a tiny sound design system, with a mute toggle |
+| 🎮 | **matthew.exe** — a hidden bedroom game in the footer (2D canvas today, 3D isometric prototypes in dev) |
 | 🐾 | A handful of little easter eggs hiding in hovers, clicks, and corners |
+
+## ✦ matthew.exe
+
+Hidden in the footer — click **play game** to open a macOS-style overlay with a cozy top-down bedroom you can walk around, collect things, and poke at.
+
+Behind the menu, there are also dev-only 3D scenes (avatar inspector + room prototype) for testing the animated GLB and isometric migration before the canvas game gets replaced.
+
+## ✦ Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Opens at [http://localhost:4281](http://localhost:4281).
 
 ## ✦ Built with
 
 - **Next.js** + **React** + **TypeScript** — App Router, a server-rendered page with client interactivity islands
 - **Tailwind CSS** for styling, **Framer Motion** for the motion layer
-- **three.js** for the travel airplane transition, **lucide-react** for icons
+- **three.js** + **React Three Fiber** for 3D (travel transition, matthew.exe prototypes), **lucide-react** for icons
 - Local TypeScript data files for content — no CMS, no database
 
 ## ✦ Connect
