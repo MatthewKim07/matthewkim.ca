@@ -209,6 +209,7 @@ function RoomPrototypeAvatar({
   const { actions, names } = useAnimations(animations, scene);
   const currentClip = useRef<string | null>(null);
   const moveVec = useMemo(() => new THREE.Vector2(), []);
+  const lastValidPos = useRef({ x: 0, z: 0, ready: false });
 
   useLayoutEffect(() => {
     if (!root.current) return;
@@ -283,14 +284,26 @@ function RoomPrototypeAvatar({
     moveVec.normalize();
     const stepX = moveVec.x * MOVE_SPEED * delta;
     const stepZ = moveVec.y * MOVE_SPEED * delta;
-    const pos = { x: actor.position.x, z: actor.position.z };
-
-    moveCircleWithCollision(pos, PLAYER_RADIUS, furnitureColliders.current, stepX, stepZ);
-
     const halfW = FLOOR_WIDTH * 0.5 - PLAYER_MARGIN;
     const halfD = FLOOR_DEPTH * 0.5 - PLAYER_MARGIN;
-    pos.x = THREE.MathUtils.clamp(pos.x, -halfW, halfW);
-    pos.z = THREE.MathUtils.clamp(pos.z, -halfD, halfD);
+    const solids = activeColliders(furnitureColliders.current);
+
+    if (!lastValidPos.current.ready) {
+      lastValidPos.current = { x: actor.position.x, z: actor.position.z, ready: true };
+    }
+
+    const pos = { x: lastValidPos.current.x, z: lastValidPos.current.z };
+    moveCircleWithCollision(pos, PLAYER_RADIUS, solids, stepX, stepZ, halfW, halfD);
+
+    if (
+      !isValidPosition(pos.x, pos.z, PLAYER_RADIUS, solids, halfW, halfD)
+    ) {
+      pos.x = lastValidPos.current.x;
+      pos.z = lastValidPos.current.z;
+    } else {
+      lastValidPos.current.x = pos.x;
+      lastValidPos.current.z = pos.z;
+    }
 
     actor.position.x = pos.x;
     actor.position.z = pos.z;
@@ -327,6 +340,10 @@ function roomRect(cx: number, cy: number, w: number, h: number) {
   return { x, z, w: rw, d: rd };
 }
 
+function activeColliders(colliders: Collider[]) {
+  return colliders.filter((box): box is Collider => box != null);
+}
+
 function circleIntersectsAABB(px: number, pz: number, radius: number, box: Collider) {
   const closestX = THREE.MathUtils.clamp(px, box.minX, box.maxX);
   const closestZ = THREE.MathUtils.clamp(pz, box.minZ, box.maxZ);
@@ -343,93 +360,71 @@ function circleIntersectsAny(px: number, pz: number, radius: number, colliders: 
   return false;
 }
 
-function depenetrateCircle(
-  pos: { x: number; z: number },
+function clampCircleX(
+  x: number,
+  z: number,
   radius: number,
   colliders: Collider[],
-) {
-  const r = Math.max(radius - COLLISION_EPS, 0);
-  for (let pass = 0; pass < 4; pass++) {
-    let fixed = false;
-    for (const box of colliders) {
-      const closestX = THREE.MathUtils.clamp(pos.x, box.minX, box.maxX);
-      const closestZ = THREE.MathUtils.clamp(pos.z, box.minZ, box.maxZ);
-      const dx = pos.x - closestX;
-      const dz = pos.z - closestZ;
-      const distSq = dx * dx + dz * dz;
-      if (distSq >= r * r) continue;
-      fixed = true;
-      if (distSq < 1e-10) {
-        const penXLeft = pos.x - box.minX;
-        const penXRight = box.maxX - pos.x;
-        const penZNear = pos.z - box.minZ;
-        const penZFar = box.maxZ - pos.z;
-        const minPen = Math.min(penXLeft, penXRight, penZNear, penZFar);
-        if (minPen === penXLeft) pos.x = box.minX - radius;
-        else if (minPen === penXRight) pos.x = box.maxX + radius;
-        else if (minPen === penZNear) pos.z = box.minZ - radius;
-        else pos.z = box.maxZ + radius;
-      } else {
-        const dist = Math.sqrt(distSq);
-        const push = (r - dist) / dist;
-        pos.x += dx * push;
-        pos.z += dz * push;
-      }
-    }
-    if (!fixed) break;
-  }
-}
-
-function resolveCircleAxis(
-  pos: { x: number; z: number },
-  radius: number,
-  colliders: Collider[],
-  axis: "x" | "z",
-  delta: number,
-) {
-  if (delta === 0) return;
-  if (axis === "x") pos.x += delta;
-  else pos.z += delta;
-
+  dx: number,
+): number {
+  if (dx === 0) return x;
   for (let pass = 0; pass < 4; pass++) {
     let hit = false;
-    if (axis === "x") {
-      if (delta > 0) {
-        let limit = pos.x;
-        for (const box of colliders) {
-          if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
-          hit = true;
-          limit = Math.min(limit, box.minX - radius);
-        }
-        if (hit) pos.x = limit;
-      } else if (delta < 0) {
-        let limit = pos.x;
-        for (const box of colliders) {
-          if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
-          hit = true;
-          limit = Math.max(limit, box.maxX + radius);
-        }
-        if (hit) pos.x = limit;
-      }
-    } else if (delta > 0) {
-      let limit = pos.z;
-      for (const box of colliders) {
-        if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
-        hit = true;
-        limit = Math.min(limit, box.minZ - radius);
-      }
-      if (hit) pos.z = limit;
-    } else if (delta < 0) {
-      let limit = pos.z;
-      for (const box of colliders) {
-        if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
-        hit = true;
-        limit = Math.max(limit, box.maxZ + radius);
-      }
-      if (hit) pos.z = limit;
+    for (const box of colliders) {
+      if (!circleIntersectsAABB(x, z, radius, box)) continue;
+      hit = true;
+      x = dx > 0 ? Math.min(x, box.minX - radius) : Math.max(x, box.maxX + radius);
     }
     if (!hit) break;
   }
+  return x;
+}
+
+function clampCircleZ(
+  x: number,
+  z: number,
+  radius: number,
+  colliders: Collider[],
+  dz: number,
+): number {
+  if (dz === 0) return z;
+  for (let pass = 0; pass < 4; pass++) {
+    let hit = false;
+    for (const box of colliders) {
+      if (!circleIntersectsAABB(x, z, radius, box)) continue;
+      hit = true;
+      z = dz > 0 ? Math.min(z, box.minZ - radius) : Math.max(z, box.maxZ + radius);
+    }
+    if (!hit) break;
+  }
+  return z;
+}
+
+function clampToRoom(
+  x: number,
+  z: number,
+  radius: number,
+  halfW: number,
+  halfD: number,
+): { x: number; z: number } {
+  return {
+    x: THREE.MathUtils.clamp(x, -halfW + radius, halfW - radius),
+    z: THREE.MathUtils.clamp(z, -halfD + radius, halfD - radius),
+  };
+}
+
+function isValidPosition(
+  x: number,
+  z: number,
+  radius: number,
+  colliders: Collider[],
+  halfW: number,
+  halfD: number,
+) {
+  if (x - radius < -halfW || x + radius > halfW || z - radius < -halfD || z + radius > halfD) {
+    return false;
+  }
+  return !circleIntersectsAny(x, z, radius, colliders);
 }
 
 function moveCircleWithCollision(
@@ -438,54 +433,60 @@ function moveCircleWithCollision(
   colliders: Collider[],
   dx: number,
   dz: number,
+  halfW: number,
+  halfD: number,
 ) {
   if (dx === 0 && dz === 0) return;
 
-  depenetrateCircle(pos, radius, colliders);
+  const solids = activeColliders(colliders);
+  const sx = pos.x;
+  const sz = pos.z;
 
-  const startX = pos.x;
-  const startZ = pos.z;
+  let x = dx !== 0 ? clampCircleX(sx + dx, sz, radius, solids, dx) : sx;
+  let z = dz !== 0 ? clampCircleZ(x, sz + dz, radius, solids, dz) : sz;
+  ({ x, z } = clampToRoom(x, z, radius, halfW, halfD));
 
-  const trySlide = (sx: number, sz: number, ax: number, az: number) => {
-    const next = { x: sx, z: sz };
-    if (ax !== 0) resolveCircleAxis(next, radius, colliders, "x", ax);
-    if (az !== 0) resolveCircleAxis(next, radius, colliders, "z", az);
-    return circleIntersectsAny(next.x, next.z, radius, colliders) ? null : next;
-  };
-
-  const full = trySlide(startX, startZ, dx, dz);
-  if (full) {
-    pos.x = full.x;
-    pos.z = full.z;
+  if (isValidPosition(x, z, radius, solids, halfW, halfD)) {
+    pos.x = x;
+    pos.z = z;
     return;
   }
 
-  const xOnly = dx !== 0 ? trySlide(startX, startZ, dx, 0) : null;
-  const zOnly = dz !== 0 ? trySlide(startX, startZ, 0, dz) : null;
+  const xSlide = dx !== 0 ? clampCircleX(sx + dx, sz, radius, solids, dx) : sx;
+  const zSlide = dz !== 0 ? clampCircleZ(sx, sz + dz, radius, solids, dz) : sz;
+  const xRoom = clampToRoom(xSlide, sz, radius, halfW, halfD);
+  const zRoom = clampToRoom(sx, zSlide, radius, halfW, halfD);
 
-  if (xOnly && zOnly) {
-    const combined = { x: xOnly.x, z: zOnly.z };
-    if (!circleIntersectsAny(combined.x, combined.z, radius, colliders)) {
+  const xOk = dx !== 0 && isValidPosition(xRoom.x, sz, radius, solids, halfW, halfD);
+  const zOk = dz !== 0 && isValidPosition(sx, zRoom.z, radius, solids, halfW, halfD);
+
+  if (xOk && zOk) {
+    const combined = clampToRoom(xSlide, zSlide, radius, halfW, halfD);
+    if (isValidPosition(combined.x, combined.z, radius, solids, halfW, halfD)) {
       pos.x = combined.x;
       pos.z = combined.z;
       return;
     }
-  }
-
-  if (xOnly) {
-    pos.x = xOnly.x;
-    pos.z = startZ;
+    // Diagonal into a corner or gap that is too narrow — hold still.
+    pos.x = sx;
+    pos.z = sz;
     return;
   }
 
-  if (zOnly) {
-    pos.x = startX;
-    pos.z = zOnly.z;
+  if (xOk) {
+    pos.x = xRoom.x;
+    pos.z = sz;
     return;
   }
 
-  pos.x = startX;
-  pos.z = startZ;
+  if (zOk) {
+    pos.x = sx;
+    pos.z = zRoom.z;
+    return;
+  }
+
+  pos.x = sx;
+  pos.z = sz;
 }
 
 /** Cozy DS-era palette for placeholder props. */
