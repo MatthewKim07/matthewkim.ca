@@ -1,27 +1,39 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, useAnimations, useGLTF } from "@react-three/drei";
 import { ArrowLeft } from "lucide-react";
 import * as THREE from "three";
 
 const MODEL_PATH = "/models/matthew-avatar-animated.glb";
+const BED_MODEL = "/models/bed.glb";
+const DESK_MODEL = "/models/desk.glb";
 const ISO_DISTANCE = 9;
 const CAMERA_ZOOM = 68;
 const PLAYER_HEIGHT = 1.05;
 const FLOOR_WIDTH = 8;
 const FLOOR_DEPTH = 6;
 const PLAYER_MARGIN = 0.55;
+const PLAYER_RADIUS = 0.24;
+const COLLISION_EPS = 0.002;
 const MOVE_SPEED = 2.15;
 const TURN_SMOOTHING = 10;
 
 useGLTF.preload(MODEL_PATH);
+useGLTF.preload(BED_MODEL);
+useGLTF.preload(DESK_MODEL);
+
+// Tuned so exported meshes match the 2D spawn-room footprint and wall alignment.
+const BED_ROTATION_Y = Math.PI / 2;
+const DESK_ROTATION_Y = 0;
 
 type ClipMap = {
   idle: string | null;
   walk: string | null;
 };
+
+type Collider = { minX: number; maxX: number; minZ: number; maxZ: number };
 
 function identifyClips(names: string[]): ClipMap {
   const idle = names.find((name) => /idle/i.test(name)) ?? names[0] ?? null;
@@ -56,6 +68,8 @@ function layoutAvatar(root: THREE.Object3D) {
 function makeOpaque(root: THREE.Object3D) {
   root.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
     const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
     mats.forEach((material) => {
       material.transparent = false;
@@ -64,9 +78,88 @@ function makeOpaque(root: THREE.Object3D) {
       material.depthWrite = true;
       material.depthTest = true;
       material.side = THREE.FrontSide;
+
+      if (material instanceof THREE.MeshPhysicalMaterial) {
+        material.transmission = 0;
+        material.thickness = 0;
+      }
+
       material.needsUpdate = true;
     });
   });
+}
+
+function layoutOnFloor(root: THREE.Object3D, footprintW: number, footprintD: number) {
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  if (size.x <= 1e-6 || size.z <= 1e-6) return;
+
+  const scale = Math.min(footprintW / size.x, footprintD / size.z);
+  root.scale.setScalar(scale);
+  root.updateMatrixWorld(true);
+
+  const fitted = new THREE.Box3().setFromObject(root);
+  const center = fitted.getCenter(new THREE.Vector3());
+  root.position.set(-center.x, -fitted.min.y, -center.z);
+  root.updateMatrixWorld(true);
+}
+
+function colliderFromMeshes(root: THREE.Object3D, inset = 0.01): Collider {
+  const box = new THREE.Box3();
+  root.updateMatrixWorld(true);
+  root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh)) return;
+    box.union(new THREE.Box3().setFromObject(obj));
+  });
+  return {
+    minX: box.min.x + inset,
+    maxX: box.max.x - inset,
+    minZ: box.min.z + inset,
+    maxZ: box.max.z - inset,
+  };
+}
+
+function FurnitureAsset({
+  modelPath,
+  position,
+  footprintW,
+  footprintD,
+  rotationY = 0,
+  onCollider,
+}: {
+  modelPath: string;
+  position: [number, number, number];
+  footprintW: number;
+  footprintD: number;
+  rotationY?: number;
+  onCollider: (box: Collider) => void;
+}) {
+  const root = useRef<THREE.Group>(null);
+  const mount = useRef<THREE.Group>(null);
+  const { scene } = useGLTF(modelPath);
+  const model = useMemo(() => scene.clone(true), [scene]);
+
+  useLayoutEffect(() => {
+    makeOpaque(model);
+  }, [model]);
+
+  useLayoutEffect(() => {
+    if (!mount.current || !root.current) return;
+    mount.current.scale.setScalar(1);
+    mount.current.position.set(0, 0, 0);
+    layoutOnFloor(mount.current, footprintW, footprintD);
+    root.current.updateMatrixWorld(true);
+    onCollider(colliderFromMeshes(root.current));
+  }, [footprintW, footprintD, model, onCollider, position, rotationY]);
+
+  return (
+    <group ref={root} position={position} rotation={[0, rotationY, 0]}>
+      <group ref={mount}>
+        <primitive object={model} />
+      </group>
+    </group>
+  );
 }
 
 function StageCamera({ targetRef }: { targetRef: React.RefObject<THREE.Group | null> }) {
@@ -100,7 +193,11 @@ function StageCamera({ targetRef }: { targetRef: React.RefObject<THREE.Group | n
   return null;
 }
 
-function RoomPrototypeAvatar() {
+function RoomPrototypeAvatar({
+  furnitureColliders,
+}: {
+  furnitureColliders: React.RefObject<Collider[]>;
+}) {
   const root = useRef<THREE.Group>(null);
   const mover = useRef<THREE.Group>(null);
   const input = useRef({ up: false, down: false, left: false, right: false });
@@ -184,13 +281,19 @@ function RoomPrototypeAvatar() {
     if (!hasMove) return;
 
     moveVec.normalize();
-    actor.position.x += moveVec.x * MOVE_SPEED * delta;
-    actor.position.z += moveVec.y * MOVE_SPEED * delta;
+    const stepX = moveVec.x * MOVE_SPEED * delta;
+    const stepZ = moveVec.y * MOVE_SPEED * delta;
+    const pos = { x: actor.position.x, z: actor.position.z };
+
+    moveCircleWithCollision(pos, PLAYER_RADIUS, furnitureColliders.current, stepX, stepZ);
 
     const halfW = FLOOR_WIDTH * 0.5 - PLAYER_MARGIN;
     const halfD = FLOOR_DEPTH * 0.5 - PLAYER_MARGIN;
-    actor.position.x = THREE.MathUtils.clamp(actor.position.x, -halfW, halfW);
-    actor.position.z = THREE.MathUtils.clamp(actor.position.z, -halfD, halfD);
+    pos.x = THREE.MathUtils.clamp(pos.x, -halfW, halfW);
+    pos.z = THREE.MathUtils.clamp(pos.z, -halfD, halfD);
+
+    actor.position.x = pos.x;
+    actor.position.z = pos.z;
 
     const targetRot = Math.atan2(moveVec.x, moveVec.y);
     const turnAlpha = 1 - Math.exp(-TURN_SMOOTHING * delta);
@@ -224,6 +327,167 @@ function roomRect(cx: number, cy: number, w: number, h: number) {
   return { x, z, w: rw, d: rd };
 }
 
+function circleIntersectsAABB(px: number, pz: number, radius: number, box: Collider) {
+  const closestX = THREE.MathUtils.clamp(px, box.minX, box.maxX);
+  const closestZ = THREE.MathUtils.clamp(pz, box.minZ, box.maxZ);
+  const dx = px - closestX;
+  const dz = pz - closestZ;
+  const r = Math.max(radius - COLLISION_EPS, 0);
+  return dx * dx + dz * dz < r * r;
+}
+
+function circleIntersectsAny(px: number, pz: number, radius: number, colliders: Collider[]) {
+  for (const box of colliders) {
+    if (circleIntersectsAABB(px, pz, radius, box)) return true;
+  }
+  return false;
+}
+
+function depenetrateCircle(
+  pos: { x: number; z: number },
+  radius: number,
+  colliders: Collider[],
+) {
+  const r = Math.max(radius - COLLISION_EPS, 0);
+  for (let pass = 0; pass < 4; pass++) {
+    let fixed = false;
+    for (const box of colliders) {
+      const closestX = THREE.MathUtils.clamp(pos.x, box.minX, box.maxX);
+      const closestZ = THREE.MathUtils.clamp(pos.z, box.minZ, box.maxZ);
+      const dx = pos.x - closestX;
+      const dz = pos.z - closestZ;
+      const distSq = dx * dx + dz * dz;
+      if (distSq >= r * r) continue;
+      fixed = true;
+      if (distSq < 1e-10) {
+        const penXLeft = pos.x - box.minX;
+        const penXRight = box.maxX - pos.x;
+        const penZNear = pos.z - box.minZ;
+        const penZFar = box.maxZ - pos.z;
+        const minPen = Math.min(penXLeft, penXRight, penZNear, penZFar);
+        if (minPen === penXLeft) pos.x = box.minX - radius;
+        else if (minPen === penXRight) pos.x = box.maxX + radius;
+        else if (minPen === penZNear) pos.z = box.minZ - radius;
+        else pos.z = box.maxZ + radius;
+      } else {
+        const dist = Math.sqrt(distSq);
+        const push = (r - dist) / dist;
+        pos.x += dx * push;
+        pos.z += dz * push;
+      }
+    }
+    if (!fixed) break;
+  }
+}
+
+function resolveCircleAxis(
+  pos: { x: number; z: number },
+  radius: number,
+  colliders: Collider[],
+  axis: "x" | "z",
+  delta: number,
+) {
+  if (delta === 0) return;
+  if (axis === "x") pos.x += delta;
+  else pos.z += delta;
+
+  for (let pass = 0; pass < 4; pass++) {
+    let hit = false;
+    if (axis === "x") {
+      if (delta > 0) {
+        let limit = pos.x;
+        for (const box of colliders) {
+          if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
+          hit = true;
+          limit = Math.min(limit, box.minX - radius);
+        }
+        if (hit) pos.x = limit;
+      } else if (delta < 0) {
+        let limit = pos.x;
+        for (const box of colliders) {
+          if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
+          hit = true;
+          limit = Math.max(limit, box.maxX + radius);
+        }
+        if (hit) pos.x = limit;
+      }
+    } else if (delta > 0) {
+      let limit = pos.z;
+      for (const box of colliders) {
+        if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
+        hit = true;
+        limit = Math.min(limit, box.minZ - radius);
+      }
+      if (hit) pos.z = limit;
+    } else if (delta < 0) {
+      let limit = pos.z;
+      for (const box of colliders) {
+        if (!circleIntersectsAABB(pos.x, pos.z, radius, box)) continue;
+        hit = true;
+        limit = Math.max(limit, box.maxZ + radius);
+      }
+      if (hit) pos.z = limit;
+    }
+    if (!hit) break;
+  }
+}
+
+function moveCircleWithCollision(
+  pos: { x: number; z: number },
+  radius: number,
+  colliders: Collider[],
+  dx: number,
+  dz: number,
+) {
+  if (dx === 0 && dz === 0) return;
+
+  depenetrateCircle(pos, radius, colliders);
+
+  const startX = pos.x;
+  const startZ = pos.z;
+
+  const trySlide = (sx: number, sz: number, ax: number, az: number) => {
+    const next = { x: sx, z: sz };
+    if (ax !== 0) resolveCircleAxis(next, radius, colliders, "x", ax);
+    if (az !== 0) resolveCircleAxis(next, radius, colliders, "z", az);
+    return circleIntersectsAny(next.x, next.z, radius, colliders) ? null : next;
+  };
+
+  const full = trySlide(startX, startZ, dx, dz);
+  if (full) {
+    pos.x = full.x;
+    pos.z = full.z;
+    return;
+  }
+
+  const xOnly = dx !== 0 ? trySlide(startX, startZ, dx, 0) : null;
+  const zOnly = dz !== 0 ? trySlide(startX, startZ, 0, dz) : null;
+
+  if (xOnly && zOnly) {
+    const combined = { x: xOnly.x, z: zOnly.z };
+    if (!circleIntersectsAny(combined.x, combined.z, radius, colliders)) {
+      pos.x = combined.x;
+      pos.z = combined.z;
+      return;
+    }
+  }
+
+  if (xOnly) {
+    pos.x = xOnly.x;
+    pos.z = startZ;
+    return;
+  }
+
+  if (zOnly) {
+    pos.x = startX;
+    pos.z = zOnly.z;
+    return;
+  }
+
+  pos.x = startX;
+  pos.z = startZ;
+}
+
 /** Cozy DS-era palette for placeholder props. */
 const C = {
   wall: "#3a4250",
@@ -231,12 +495,6 @@ const C = {
   floor: "#262c35",
   rug: "#5c4a42",
   rugAccent: "#7a6358",
-  bedFrame: "#5c4a3a",
-  bedding: "#6b8fc4",
-  pillow: "#e8e4dc",
-  desk: "#6b5344",
-  deskTop: "#7d6550",
-  screen: "#8ecae6",
   shelf: "#4f4238",
   bookA: "#c47b5a",
   bookB: "#5a8f7b",
@@ -267,7 +525,13 @@ function Block({
   );
 }
 
-function PlaceholderProps() {
+function PlaceholderProps({
+  onBedCollider,
+  onDeskCollider,
+}: {
+  onBedCollider: (box: Collider) => void;
+  onDeskCollider: (box: Collider) => void;
+}) {
   const bed = roomRect(20, 22, 52, 44);
   const desk = roomRect(166, 22, 62, 24);
   const shelf = roomRect(18, 120, 16, 42);
@@ -286,31 +550,23 @@ function PlaceholderProps() {
         <meshStandardMaterial color={C.rugAccent} roughness={0.98} metalness={0} />
       </mesh>
 
-      {/* Bed — top-left */}
-      <group position={[bed.x, 0, bed.z]}>
-        <Block args={[bed.w, 0.22, bed.d]} position={[0, 0.11, 0]} color={C.bedFrame} />
-        <Block args={[bed.w * 0.95, 0.14, bed.d * 0.85]} position={[0, 0.29, 0.02]} color={C.bedding} />
-        <Block
-          args={[bed.w * 0.28, 0.1, bed.d * 0.55]}
-          position={[-bed.w * 0.28, 0.38, -bed.d * 0.18]}
-          color={C.pillow}
-        />
-        <Block
-          args={[0.08, 0.45, bed.d]}
-          position={[-bed.w * 0.48, 0.24, 0]}
-          color={C.bedFrame}
-        />
-      </group>
+      <FurnitureAsset
+        modelPath={BED_MODEL}
+        position={[bed.x, 0, bed.z]}
+        footprintW={bed.w}
+        footprintD={bed.d}
+        rotationY={BED_ROTATION_Y}
+        onCollider={onBedCollider}
+      />
 
-      {/* Desk — top-right */}
-      <group position={[desk.x, 0, desk.z]}>
-        <Block args={[desk.w, 0.08, desk.d]} position={[0, 0.52, 0]} color={C.deskTop} />
-        <Block args={[desk.w * 0.95, 0.48, 0.12]} position={[0, 0.26, desk.d * 0.35]} color={C.desk} />
-        <Block args={[0.22, 0.38, 0.14]} position={[-desk.w * 0.2, 0.22, desk.d * 0.1]} color={C.desk} />
-        <Block args={[0.22, 0.38, 0.14]} position={[desk.w * 0.2, 0.22, desk.d * 0.1]} color={C.desk} />
-        <Block args={[0.28, 0.2, 0.06]} position={[desk.w * 0.15, 0.66, -desk.d * 0.15]} color="#2a2e36" />
-        <Block args={[0.22, 0.14, 0.02]} position={[desk.w * 0.15, 0.76, -desk.d * 0.15]} color={C.screen} />
-      </group>
+      <FurnitureAsset
+        modelPath={DESK_MODEL}
+        position={[desk.x, 0, desk.z]}
+        footprintW={desk.w}
+        footprintD={desk.d}
+        rotationY={DESK_ROTATION_Y}
+        onCollider={onDeskCollider}
+      />
 
       {/* Bookshelf — left wall */}
       <group position={[shelf.x, 0, shelf.z]}>
@@ -343,7 +599,13 @@ function PlaceholderProps() {
   );
 }
 
-function RoomGeometry() {
+function RoomGeometry({
+  onBedCollider,
+  onDeskCollider,
+}: {
+  onBedCollider: (box: Collider) => void;
+  onDeskCollider: (box: Collider) => void;
+}) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -373,7 +635,7 @@ function RoomGeometry() {
         <meshStandardMaterial color={C.wall} roughness={0.9} metalness={0.02} />
       </mesh>
 
-      <PlaceholderProps />
+      <PlaceholderProps onBedCollider={onBedCollider} onDeskCollider={onDeskCollider} />
 
       <ContactShadows
         position={[0, 0.001, 0]}
@@ -384,6 +646,23 @@ function RoomGeometry() {
         resolution={512}
         color="#000000"
       />
+    </>
+  );
+}
+
+function RoomPrototypeWorld() {
+  const furnitureColliders = useRef<Collider[]>([]);
+  const onBedCollider = useCallback((box: Collider) => {
+    furnitureColliders.current[0] = box;
+  }, []);
+  const onDeskCollider = useCallback((box: Collider) => {
+    furnitureColliders.current[1] = box;
+  }, []);
+
+  return (
+    <>
+      <RoomGeometry onBedCollider={onBedCollider} onDeskCollider={onDeskCollider} />
+      <RoomPrototypeAvatar furnitureColliders={furnitureColliders} />
     </>
   );
 }
@@ -416,8 +695,7 @@ export function RoomPrototypeScene({ onMenu }: { onMenu: () => void }) {
         className="h-full w-full"
       >
         <color attach="background" args={["#0b0d12"]} />
-        <RoomGeometry />
-        <RoomPrototypeAvatar />
+        <RoomPrototypeWorld />
       </Canvas>
 
       <div
