@@ -8,6 +8,7 @@ import { TravelOverlay } from "@/components/travel/TravelOverlay";
 import { DarkModeCursor } from "@/components/DarkModeCursor";
 import { GameProvider } from "@/context/GameContext";
 import { GameOverlayMount } from "@/components/GameOverlayMount";
+import { GAME_ENABLED } from "@/game/config";
 
 export function ClientRoot({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +20,7 @@ export function ClientRoot({ children }: { children: React.ReactNode }) {
             <DarkModeCursor />
             <PersistentMusicPlayer />
             <TravelOverlay />
-            <GameOverlayMount />
+            {GAME_ENABLED && <GameOverlayMount />}
           </GameProvider>
         </TravelProvider>
       </MusicProvider>

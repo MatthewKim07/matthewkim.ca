@@ -22,6 +22,7 @@ import { EmailLink } from "@/components/EmailLink";
 import { SoundToggle } from "@/components/SoundToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MatthewExeLauncher } from "@/components/MatthewExeLauncher";
+import { GAME_ENABLED } from "@/game/config";
 
 const milker = localFont({
   src: "./fonts/milker.otf",
@@ -133,7 +134,7 @@ export default function Home() {
           <QuoteOfTheDay variant="footer" />
           <div className="flex flex-col items-center gap-4">
             <BubbyGif />
-            <MatthewExeLauncher />
+            {GAME_ENABLED && <MatthewExeLauncher />}
           </div>
           <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
           <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
