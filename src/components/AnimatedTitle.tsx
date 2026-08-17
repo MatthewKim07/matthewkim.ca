@@ -187,6 +187,12 @@ export default function AnimatedTitle({
       className={className}
     >
       {CHARS.slice(0, KIM_START).map((char, i) => {
+        // The word gap is a plain, collapsible space rather than a letter box.
+        // It used to be a non-breaking space inside an inline-block, which kept
+        // its full width when the title wrapped, centring the first line around
+        // a trailing gap and leaving it ~14px left of true centre on mobile.
+        if (char === " ") return " ";
+
         const s = seeds[i];
         return (
           <motion.span
@@ -203,7 +209,7 @@ export default function AnimatedTitle({
               opacity: { duration: 0.01, delay: s.delay },
             }}
           >
-            {char === " " ? " " : char}
+            {char}
           </motion.span>
         );
       })}
