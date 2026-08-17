@@ -76,7 +76,7 @@ export default function Home() {
           <CyclingPhrase />
           <ul className="text-base text-gray-500 dark:text-gray-400 space-y-2 leading-relaxed">
             <AnimatedIconItem icon="handshake">
-              <span>current part-time <LinkPreview url="https://assignment-planner.lib.uwaterloo.ca/" soundOnClick="mouseClick" className="group" annotation="Something I built" isStatic imageSrc="/images/swd-uwaterloo-preview-image.png"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">software developer </span><span className="group-hover:text-[#FED34C] transition-colors">@UWaterloo</span></LinkPreview></span>
+              <span>incoming <LinkPreview url="https://www.statcan.gc.ca/en/start" soundOnClick="mouseClick" className="group"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">open-source developer </span><span className="group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">@StatCan</span></LinkPreview></span>
             </AnimatedIconItem>
             <AnimatedIconItem icon="lightbulb">
               <span>interested in <SoftwareEngineeringWord /> and <RoboticsWord /></span>
