@@ -32,7 +32,7 @@ const PHRASES = [
   "i get excited about things most people find boring",
   "i turn caffeine into shipped products",
   "i take 'build it and they will come' literally",
-  "i'm looking for fall 2026 internships, by the way",
+  "i'm looking for spring 2027 internships, by the way",
   "i was a software developer at UWaterloo",
   "i build real things, not just class projects",
   "i take robotics and AI equally seriously",

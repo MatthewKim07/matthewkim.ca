@@ -88,7 +88,7 @@ export default function Home() {
               <span><BasketballWord />, <MusicWord />, <TravelWord />, and always building</span>
             </AnimatedIconItem>
             <AnimatedIconItem icon="briefcase">
-              <span>seeking fall 2026 internship opportunities</span>
+              <span>seeking spring 2027 internship opportunities</span>
             </AnimatedIconItem>
           </ul>
         </div>
