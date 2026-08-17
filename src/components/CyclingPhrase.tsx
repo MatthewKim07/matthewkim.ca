@@ -127,13 +127,17 @@ export function CyclingPhrase() {
   };
   const handleMouseLeave = () => scheduleNext();
 
+  // Desktop pins the phrase absolutely inside a one-line box so swapping
+  // between long and short phrases never nudges the list below it. There is no
+  // room for that on a phone, so the phrase wraps and sits in flow, with two
+  // lines reserved to keep most swaps from shifting the page.
   return (
-    <div className="relative h-7">
+    <div className="relative min-h-14 md:min-h-0 md:h-7">
       <button
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="absolute left-0 top-0 group text-left cursor-pointer outline-none select-none"
+        className="static md:absolute left-0 top-0 group text-left cursor-pointer outline-none select-none"
         aria-label="Click for another phrase"
       >
         <AnimatePresence mode="wait">
@@ -143,7 +147,7 @@ export function CyclingPhrase() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-            className="inline-block whitespace-nowrap text-lg text-gray-800 dark:text-gray-200 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors"
+            className="inline-block whitespace-normal md:whitespace-nowrap text-lg text-gray-800 dark:text-gray-200 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors"
           >
             {PHRASES[idx]}
             <span className="ml-1.5 opacity-0 group-hover:opacity-40 transition-opacity text-sm select-none">
