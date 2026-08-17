@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 // ─── enter (787, left → right) ──────────────────────────────────────────────
 export const PLANE_DURATION    = 5.0;
@@ -45,7 +46,11 @@ function makeLoader(path: string) {
     if (cache) return Promise.resolve(cache);
     if (promise) return promise;
     promise = new Promise((resolve, reject) => {
-      new GLTFLoader().load(path, (gltf) => {
+      // The models ship meshopt-compressed and quantized, which keeps the A380
+      // under a tenth of its original size. The decoder is needed to read that.
+      const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
+      loader.load(path, (gltf) => {
         const box   = new THREE.Box3().setFromObject(gltf.scene);
         const center = box.getCenter(new THREE.Vector3());
         const size   = box.getSize(new THREE.Vector3());
