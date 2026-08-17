@@ -11,8 +11,6 @@ import { LinkPreview } from "@/components/LinkPreview";
 import { RainbowText } from "@/components/RainbowText";
 import { CyclingPhrase } from "@/components/CyclingPhrase";
 import { BasketballWord } from "@/components/BasketballEasterEgg";
-import { SoftwareEngineeringWord } from "@/components/MatrixEasterEgg";
-import { RoboticsWord } from "@/components/RoboticsEasterEgg";
 import { MusicWord } from "@/components/MusicEasterEgg";
 import { TravelWord } from "@/components/travel/TravelWord";
 import { TechStack } from "@/components/TechStack";
@@ -79,7 +77,7 @@ export default function Home() {
               <span>incoming <LinkPreview url="https://www.statcan.gc.ca/en/start" soundOnClick="mouseClick" className="group"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">open-source developer </span><span className="group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">@StatCan</span></LinkPreview></span>
             </AnimatedIconItem>
             <AnimatedIconItem icon="lightbulb">
-              <span>interested in <SoftwareEngineeringWord /> and <RoboticsWord /></span>
+              <span>interested in software engineering and robotics</span>
             </AnimatedIconItem>
             <AnimatedIconItem icon="trophy">
               <span>winner of the <LinkPreview isStatic videoSrc="/videos/pantrypal-video.mov" url="https://yourpantrypal.lovable.app/" soundOnClick="pantryPalClick"><RainbowText text="Fide x Lovable Hackathon" /></LinkPreview></span>
