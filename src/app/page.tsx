@@ -99,7 +99,11 @@ export default function Home() {
       >
         <span data-basketball-collider className="inline-block">my experience</span>
       </h2>
-      <div className="grid grid-cols-2 max-w-lg mx-auto pb-12 px-8">
+      {/* Two narrow columns wrap "University of Waterloo" onto a second line
+          while "Western University" stays on one, which pushed that column's
+          logo and role a line lower. Stacking on mobile gives each card the
+          full width, so there are no rows left to misalign. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 md:gap-y-0 max-w-lg mx-auto pb-12 px-8">
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
           <h4 className="text-sm font-medium text-gray-400 dark:text-gray-500 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>
