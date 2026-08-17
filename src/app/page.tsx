@@ -130,14 +130,18 @@ export default function Home() {
       <GenerativeArtGallery />
       <TechStack />
       <footer className="relative mt-24" style={{ fontFamily: "var(--font-sf)" }}>
-        <div className="relative bg-site-ink dark:bg-site-paper px-8 py-10 flex flex-col items-center gap-8">
+        {/* The copyright and social row are pinned to the footer's left and
+            right edges on desktop, which leaves them sitting on top of the
+            centred quote once the footer narrows. Below md they join the
+            column instead, so everything stacks with even breathing room. */}
+        <div className="relative bg-site-ink dark:bg-site-paper px-8 py-14 md:py-10 flex flex-col items-center gap-10 md:gap-8">
           <QuoteOfTheDay variant="footer" />
           <div className="flex flex-col items-center gap-4">
             <BubbyGif />
             {GAME_ENABLED && <MatthewExeLauncher />}
           </div>
-          <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
+          <span className="static order-last md:absolute md:order-none left-8 top-1/2 md:-translate-y-1/2 text-white dark:text-gray-900 text-sm font-medium">© 2026 Matthew Kim</span>
+          <div className="static md:absolute right-8 top-1/2 md:-translate-y-1/2 flex items-center gap-3">
             <EmailLink email="matthewminchulkim@gmail.com" className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-red-600 dark:bg-gray-900/10 dark:text-gray-900 dark:hover:bg-red-600 dark:hover:text-white transition-colors">
               <Mail size={15} strokeWidth={1.5} />
             </EmailLink>
