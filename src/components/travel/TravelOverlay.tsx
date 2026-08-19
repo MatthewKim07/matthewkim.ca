@@ -158,10 +158,23 @@ export function TravelOverlay() {
   // Exit progress 0→1 drives the A380 landing transition.
   const exitProgressRef = useRef<number>(0);
   const exitRawProgress = useMotionValue(0);
+  // True once the exit wipe has cleared the viewport. The plane keeps flying for
+  // the rest of the animation, but by then the page underneath is what the user
+  // sees, so the overlay must stop intercepting input.
+  const [exitRevealed, setExitRevealed] = useState(false);
 
   // Keep progressRefs in sync so Three.js useFrame can read them each tick.
   useEffect(() => rawProgress.on("change",     (v) => { progressRef.current     = v; }), [rawProgress]);
   useEffect(() => exitRawProgress.on("change", (v) => { exitProgressRef.current = v; }), [exitRawProgress]);
+
+  // Mirrors the edge exitClipPath draws, so the two can never disagree about
+  // when the gallery has finished wiping away.
+  useEffect(() => exitRawProgress.on("change", (v) => {
+    const eased = easeInOutCubic(v);
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+    const planeScreenX = (lerp(EXIT_PLANE_START[0], EXIT_PLANE_END[0], eased) + 0.5) * vw;
+    setExitRevealed(planeScreenX + PLANE_LEAD_PX <= 0);
+  }), [exitRawProgress]);
 
   // Fades in once the clip-path covers the viewport (~progress 0.52), before the animation timer fires.
   const chromeOp = useTransform(rawProgress, [0.5, 0.57], [0, 1]);
@@ -191,13 +204,13 @@ export function TravelOverlay() {
 
   // body scroll lock
   useEffect(() => {
-    if (state !== "idle") {
+    if (state !== "idle" && !(state === "transitioning-out" && exitRevealed)) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
     return () => { document.body.style.overflow = ""; };
-  }, [state]);
+  }, [state, exitRevealed]);
 
   // escape closes
   useEffect(() => {
@@ -315,7 +328,7 @@ export function TravelOverlay() {
   return (
     <motion.div
       style={{ opacity: overlayOp }}
-      className="fixed inset-0 z-[70]"
+      className={`fixed inset-0 z-[70] ${isTransOut && exitRevealed ? "pointer-events-none" : ""}`}
     >
       {/* Gallery stays mounted; clip-path covers the viewport once the plane exits. */}
       <motion.div style={{ clipPath: isTransOut ? exitClipPath : clipPath, position: "absolute", inset: 0, backgroundColor: "#141414" }}>
