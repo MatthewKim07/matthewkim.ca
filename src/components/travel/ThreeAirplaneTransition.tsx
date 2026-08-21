@@ -18,14 +18,33 @@ export const PLANE_PITCH_AMOUNT = 0.2;
 
 // ─── exit (A380, right → left, descending) ──────────────────────────────────
 export const EXIT_PLANE_DURATION = 5.0;
-const EXIT_PLANE_SCALE           = 5.0;
+export const EXIT_PLANE_SCALE    = 5.0;
 export const EXIT_PLANE_START    = [0.95,  0.38, -0.3 ] as const; // top-right, off-screen
 export const EXIT_PLANE_END      = [-1.55, -0.3,  0.45] as const; // bottom-left, off-screen
 const EXIT_BANK_AMOUNT           = 0.18;
 
 // ─── shared ─────────────────────────────────────────────────────────────────
 export const CAMERA_POSITION = [0, 0, 7] as const;
+export const CAMERA_FOV      = 42;
 export const LIGHT_INTENSITY = 3.1;
+
+/**
+ * How far past the left edge of the screen the exit plane sits, in px, at a
+ * given raw progress. Negative once the whole aircraft has flown out of view.
+ *
+ * The A380 spans about half a laptop viewport but twice a phone's, so it
+ * leaves the screen at very different times on each. Callers that need to know
+ * when it is really gone have to measure rather than assume a duration.
+ */
+export function exitPlaneRightEdgePx(progress: number, vw: number, vh: number): number {
+  const eased  = easeInOutCubic(THREE.MathUtils.clamp(progress, 0, 1));
+  const worldH = 2 * CAMERA_POSITION[2] * Math.tan((CAMERA_FOV * Math.PI) / 360);
+  const worldW = worldH * (vw / vh);
+  const xWorld = worldW * THREE.MathUtils.lerp(EXIT_PLANE_START[0], EXIT_PLANE_END[0], eased);
+  // Half the model's longest axis: a conservative bound whatever its banking.
+  const halfSpan = EXIT_PLANE_SCALE / 2;
+  return ((xWorld + halfSpan) / worldW + 0.5) * vw;
+}
 
 const ENTER_MODEL_PATH     = "/models/boeing_787_dreamliner.glb";
 const ENTER_MODEL_ROTATION = [-0.4,  Math.PI / 2, 0] as const;
@@ -118,7 +137,7 @@ function PlaneCanvas({ children }: { children: React.ReactNode }) {
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
         style={{ width: "100%", height: "100%", display: "block", pointerEvents: "none" }}
       >
-        <PerspectiveCamera makeDefault fov={42} position={CAMERA_POSITION} />
+        <PerspectiveCamera makeDefault fov={CAMERA_FOV} position={CAMERA_POSITION} />
         <ambientLight intensity={LIGHT_INTENSITY * 0.5} />
         <directionalLight intensity={LIGHT_INTENSITY}        position={[-4,  3.5, 5]} />
         <directionalLight intensity={LIGHT_INTENSITY * 0.55} position={[ 4, -1.5, 3]} />

@@ -6,7 +6,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { House } from "lucide-react";
 import { useTravelPlayer } from "@/context/TravelContext";
 import { DraggableContainer } from "./DraggableGallery";
-import { PLANE_DURATION, PLANE_START, PLANE_END, EXIT_PLANE_DURATION, EXIT_PLANE_START, EXIT_PLANE_END, easeInOutCubic, ThreeAirplaneTransition, ThreeAirplaneExitTransition } from "./ThreeAirplaneTransition";
+import { PLANE_DURATION, PLANE_START, PLANE_END, EXIT_PLANE_DURATION, EXIT_PLANE_START, EXIT_PLANE_END, easeInOutCubic, exitPlaneRightEdgePx, ThreeAirplaneTransition, ThreeAirplaneExitTransition } from "./ThreeAirplaneTransition";
 import { TRAVEL_PHOTOS, STACKED_BELOW, type TravelPhoto } from "@/data/travel";
 
 // Tunables
@@ -144,6 +144,7 @@ export function TravelOverlay() {
   const exitAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const exitTimerRef = useRef<number | null>(null);
   const exitCompletedRef = useRef(false);
+  const completeExitRef = useRef<(() => void) | null>(null);
   const [prefersReducedMotion] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -171,9 +172,16 @@ export function TravelOverlay() {
   // when the gallery has finished wiping away.
   useEffect(() => exitRawProgress.on("change", (v) => {
     const eased = easeInOutCubic(v);
-    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+    const vw = typeof window !== "undefined" ? window.innerWidth  : 1920;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
     const planeScreenX = (lerp(EXIT_PLANE_START[0], EXIT_PLANE_END[0], eased) + 0.5) * vw;
     setExitRevealed(planeScreenX + PLANE_LEAD_PX <= 0);
+
+    // Once the whole aircraft is past the left edge there is nothing left to
+    // watch, so the exit ends here rather than at the animation's full
+    // duration. That returns the player to idle, which re-arms the travel
+    // trigger and lets the canvas unmount instead of rendering out of sight.
+    if (exitPlaneRightEdgePx(v, vw, vh) < 0) completeExitRef.current?.();
   }), [exitRawProgress]);
 
   // Fades in once the clip-path covers the viewport (~progress 0.52), before the animation timer fires.
@@ -292,11 +300,14 @@ export function TravelOverlay() {
     const completeExit = () => {
       if (exitCompletedRef.current) return;
       exitCompletedRef.current = true;
+      completeExitRef.current = null;
       overlayOp.set(0);
       clearExitAnimation();
       _advanceToIdle();
     };
 
+    // Kept as a backstop in case the geometry check never fires.
+    completeExitRef.current = completeExit;
     exitTimerRef.current = window.setTimeout(completeExit, EXIT_PLANE_DURATION * 1000 + 150);
 
     exitAnimationRef.current = animate(exitRawProgress, 1, {

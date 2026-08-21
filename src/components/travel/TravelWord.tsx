@@ -18,18 +18,23 @@ export function TravelWord() {
     (e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
+        if (state !== "idle") return;
+        sounds.planeFlyby();
         enter();
       }
     },
-    [enter]
+    [enter, state]
   );
 
-  const disabled = state === "transitioning-in" || state === "gallery";
+  // Anything but idle means a transition owns the screen. Leaving the exit out
+  // of this let a click during the landing play the flyby sound while enter()
+  // quietly refused, which read as the trigger being broken.
+  const disabled = state !== "idle";
 
   return (
     <button
       ref={btnRef}
-      onClick={() => { sounds.planeFlyby(); enter(); }}
+      onClick={() => { if (state !== "idle") return; sounds.planeFlyby(); enter(); }}
       onKeyDown={handleKeyDown}
       disabled={disabled}
       aria-label="travel (click to open travel gallery)"
