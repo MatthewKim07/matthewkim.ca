@@ -6,12 +6,17 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { House } from "lucide-react";
 import { useTravelPlayer } from "@/context/TravelContext";
 import { DraggableContainer } from "./DraggableGallery";
-import { PLANE_DURATION, PLANE_START, PLANE_END, EXIT_PLANE_DURATION, EXIT_PLANE_START, EXIT_PLANE_END, easeInOutCubic, exitPlaneRightEdgePx, ThreeAirplaneTransition, ThreeAirplaneExitTransition } from "./ThreeAirplaneTransition";
+import { PLANE_DURATION, PLANE_START, PLANE_END, EXIT_PLANE_DURATION, EXIT_PLANE_START, EXIT_PLANE_END, easeInOutCubic, exitPlaneRightEdgePx, preloadEnterPlane, preloadExitPlane, whenEnterPlaneReady, whenExitPlaneReady, ThreeAirplaneTransition, ThreeAirplaneExitTransition } from "./ThreeAirplaneTransition";
 import { TRAVEL_PHOTOS, STACKED_BELOW, type TravelPhoto } from "@/data/travel";
 
 // Tunables
 const WIPE_SKEW_PX     = 120;  // diagonal softness of the reveal edge (px)
-const PLANE_LEAD_PX    = 60;   // how far the plane center leads the reveal edge (px)
+const PLANE_LEAD_PX    = 60;
+// How long a transition will wait on its model before starting regardless. The
+// enter cap is short because the click should still feel responsive; the exit
+// can afford longer, since its model has been downloading since travel opened.
+const ENTER_MODEL_WAIT_MS = 1200;
+const EXIT_MODEL_WAIT_MS  = 2000;   // how far the plane center leads the reveal edge (px)
 
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
@@ -145,6 +150,28 @@ export function TravelOverlay() {
   const exitTimerRef = useRef<number | null>(null);
   const exitCompletedRef = useRef(false);
   const completeExitRef = useRef<(() => void) | null>(null);
+  // Bumped whenever a run is superseded, so an await that resolves late knows
+  // to bail instead of starting an animation the user has moved on from.
+  const runTokenRef = useRef(0);
+  // The enter plane is small and needed almost immediately after a click, so it
+  // is fetched once the browser has finished the work that actually matters.
+  // requestIdleCallback is still missing in Safari, hence the timeout fallback.
+  useEffect(() => {
+    let idleId: number | null = null;
+    let timerId: number | null = null;
+    if (typeof window === "undefined") return;
+    const ric = window.requestIdleCallback;
+    if (typeof ric === "function") {
+      idleId = ric(() => preloadEnterPlane(), { timeout: 3000 });
+    } else {
+      timerId = window.setTimeout(() => preloadEnterPlane(), 1500);
+    }
+    return () => {
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timerId !== null) window.clearTimeout(timerId);
+    };
+  }, []);
+
   const [prefersReducedMotion] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -248,10 +275,15 @@ export function TravelOverlay() {
     }
   }, []);
 
-  const runEnter = useCallback(() => {
+  const runEnter = useCallback(async () => {
     clearEnterAnimation();
     clearExitAnimation();
     enterCompletedRef.current = false;
+    const token = ++runTokenRef.current;
+
+    // The A380 is only needed once the gallery closes, so it starts arriving
+    // now and has this animation plus the browsing session to finish.
+    preloadExitPlane();
 
     if (prefersReducedMotion) {
       overlayOp.set(1);
@@ -260,6 +292,13 @@ export function TravelOverlay() {
       _advanceToGallery();
       return;
     }
+
+    // Idle preloading means the model is almost always here already. When it
+    // is not, waiting briefly beats opening with an empty sky, since the plane
+    // is what draws the reveal. The cap keeps a stalled fetch from hanging the
+    // interaction entirely.
+    await whenEnterPlaneReady(ENTER_MODEL_WAIT_MS);
+    if (token !== runTokenRef.current) return;
 
     overlayOp.set(1);
     rawProgress.set(0);
@@ -285,17 +324,21 @@ export function TravelOverlay() {
     });
   }, [clearEnterAnimation, clearExitAnimation, rawProgress, overlayOp, _advanceToGallery, prefersReducedMotion]);
 
-  const runExit = useCallback(() => {
+  const runExit = useCallback(async () => {
     clearEnterAnimation();
     clearExitAnimation();
     exitCompletedRef.current = false;
     exitRawProgress.set(0);
+    const token = ++runTokenRef.current;
 
     if (prefersReducedMotion) {
       overlayOp.set(0);
       _advanceToIdle();
       return;
     }
+
+    await whenExitPlaneReady(EXIT_MODEL_WAIT_MS);
+    if (token !== runTokenRef.current) return;
 
     const completeExit = () => {
       if (exitCompletedRef.current) return;

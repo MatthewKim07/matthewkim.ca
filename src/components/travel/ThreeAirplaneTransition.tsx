@@ -102,10 +102,35 @@ function makeLoader(path: string) {
 const enterLoader = makeLoader(ENTER_MODEL_PATH);
 const exitLoader  = makeLoader(EXIT_MODEL_PATH);
 
-// Start both loading at page init so they're ready before the user interacts.
-if (typeof window !== "undefined") {
-  enterLoader.get();
-  exitLoader.get();
+// Fetching both models at page init cost every visitor 7.8MB before they had
+// asked for anything, most of it the A380. The two have very different
+// deadlines, so they are now fetched separately:
+//
+//   enter (787, ~0.7MB)  needed within a second or so of the click, and on a
+//                        phone the plane is on screen from the first frame,
+//                        so this is preloaded while the browser is idle.
+//   exit  (A380, ~7MB)   not needed until the gallery is closed again, which
+//                        leaves it the whole enter animation plus the browsing
+//                        session to arrive. Only fetched once travel starts.
+//
+// Both resolve from cache after the first call, so repeat calls are free.
+export const preloadEnterPlane = () => enterLoader.get().catch(() => {});
+export const preloadExitPlane  = () => exitLoader.get().catch(() => {});
+
+/** Resolves once the enter model is in memory, or after `timeoutMs` either way. */
+export function whenEnterPlaneReady(timeoutMs: number): Promise<void> {
+  return Promise.race([
+    enterLoader.get().then(() => undefined).catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+}
+
+/** Resolves once the exit model is in memory, or after `timeoutMs` either way. */
+export function whenExitPlaneReady(timeoutMs: number): Promise<void> {
+  return Promise.race([
+    exitLoader.get().then(() => undefined).catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
 }
 
 // ─── shared Canvas wrapper ───────────────────────────────────────────────────
