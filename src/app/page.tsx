@@ -111,7 +111,7 @@ export default function Home() {
                 background, so they read fine on white. This one is mostly
                 transparent/white, so it needs its own border to stay visible
                 against a light-mode page. */}
-            <div className="rounded-md border border-gray-900/15 dark:border-white/20 overflow-hidden">
+            <div className="rounded-md border border-gray-900/15 dark:border-transparent overflow-hidden">
               <Image data-basketball-collider src="/images/statcan-logo.png" alt="Statistics Canada" width={160} height={160} className="object-contain" />
             </div>
           </LinkPreview>
