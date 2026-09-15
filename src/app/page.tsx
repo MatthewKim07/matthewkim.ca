@@ -74,7 +74,7 @@ export default function Home() {
           <CyclingPhrase />
           <ul className="text-base text-gray-500 dark:text-gray-400 space-y-2 leading-relaxed">
             <AnimatedIconItem icon="handshake">
-              <span>incoming <LinkPreview url="https://www.statcan.gc.ca/en/start" soundOnClick="mouseClick" className="group"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">open-source developer </span><span className="group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">@StatCan</span></LinkPreview></span>
+              <span><LinkPreview url="https://www.statcan.gc.ca/en/start" soundOnClick="mouseClick" className="group"><span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">open-source developer </span><span className="group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">@StatCan</span></LinkPreview></span>
             </AnimatedIconItem>
             <AnimatedIconItem icon="lightbulb">
               <span>interested in software engineering and robotics</span>
