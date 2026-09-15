@@ -97,11 +97,26 @@ export default function Home() {
       >
         <span data-basketball-collider className="inline-block">my experience</span>
       </h2>
-      {/* Two narrow columns wrap "University of Waterloo" onto a second line
-          while "Western University" stays on one, which pushed that column's
-          logo and role a line lower. Stacking on mobile gives each card the
-          full width, so there are no rows left to misalign. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 md:gap-y-0 max-w-lg mx-auto pb-12 px-8">
+      {/* Narrow columns wrap "University of Waterloo" and "Statistics Canada"
+          onto a second line while "Western University" stays on one, which
+          pushed those columns' logo and role a line lower. Stacking on
+          mobile gives each card the full width, so there are no rows left
+          to misalign. */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-y-0 md:gap-x-20 max-w-2xl md:max-w-3xl mx-auto pb-12 px-8">
+        <div className="flex flex-col items-center gap-3">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Government of Canada</span></h3>
+          <h4 className="text-sm font-medium text-gray-400 dark:text-gray-500 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">StatCan</span></h4>
+          <LinkPreview url="https://www.statcan.gc.ca/en/start" soundOnClick="satisfyingPress" width={200} height={130}>
+            {/* The other two logos fill their tile edge-to-edge with a solid
+                background, so they read fine on white. This one is mostly
+                transparent/white, so it needs its own border to stay visible
+                against a light-mode page. */}
+            <div className="rounded-md border border-gray-900/15 dark:border-white/20 overflow-hidden">
+              <Image data-basketball-collider src="/images/statcan-logo.png" alt="Statistics Canada" width={160} height={160} className="object-contain" />
+            </div>
+          </LinkPreview>
+          <span data-basketball-collider className="text-sm text-gray-500 dark:text-gray-400" style={{ fontFamily: "var(--font-sf)" }}>Open Source Developer</span>
+        </div>
         <div className="flex flex-col items-center gap-3">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
           <h4 className="text-sm font-medium text-gray-400 dark:text-gray-500 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>
