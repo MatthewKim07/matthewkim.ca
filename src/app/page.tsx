@@ -111,8 +111,8 @@ export default function Home() {
                 background, so they read fine on white. This one is mostly
                 transparent/white, so it needs its own border to stay visible
                 against a light-mode page. */}
-            <div className="rounded-md border border-gray-900/15 dark:border-transparent overflow-hidden">
-              <Image data-basketball-collider src="/images/statcan-logo.png" alt="Statistics Canada" width={160} height={160} className="object-contain" />
+            <div className="w-[160px] h-[160px] box-border flex items-center justify-center p-4 rounded-md border border-gray-900/15 dark:border-transparent bg-white overflow-hidden">
+              <Image data-basketball-collider src="/images/statcan-logo.png" alt="Statistics Canada" width={128} height={128} className="object-contain" />
             </div>
           </LinkPreview>
           <span data-basketball-collider className="text-sm text-gray-500 dark:text-gray-400" style={{ fontFamily: "var(--font-sf)" }}>Open Source Developer</span>
@@ -121,7 +121,7 @@ export default function Home() {
           <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">University of Waterloo</span></h3>
           <h4 className="text-sm font-medium text-gray-400 dark:text-gray-500 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Libraries</span></h4>
           <LinkPreview url="https://lib.uwaterloo.ca/web/" soundOnClick="satisfyingPress" width={200} height={130} isStatic imageSrc="/images/uwaterloo-image-link-preview.png">
-            <Image data-basketball-collider src="/images/uwaterloo-logo.png" alt="University of Waterloo" width={160} height={160} className="object-contain" />
+            <Image data-basketball-collider src="/images/uwaterloo-logo.png" alt="University of Waterloo" width={160} height={160} className="object-contain rounded-md" />
           </LinkPreview>
           <span data-basketball-collider className="text-sm text-gray-500 dark:text-gray-400" style={{ fontFamily: "var(--font-sf)" }}>Software Developer</span>
         </div>
@@ -129,7 +129,7 @@ export default function Home() {
           <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">Western University</span></h3>
           <h4 className="text-sm font-medium text-gray-400 dark:text-gray-500 text-center -mt-2" style={{ fontFamily: "var(--font-sf)" }}><span data-basketball-collider className="inline-block">FAST</span></h4>
           <LinkPreview url="https://www.appropedia.org/FAST" soundOnClick="satisfyingPress" width={200} height={130} isStatic imageSrc="/images/westernu-image-link-preview.png">
-            <Image data-basketball-collider src="/images/westernu-logo.png" alt="Western University" width={160} height={160} className="object-contain" />
+            <Image data-basketball-collider src="/images/westernu-logo.png" alt="Western University" width={160} height={160} className="object-contain rounded-md" />
           </LinkPreview>
           <span data-basketball-collider className="text-sm text-gray-500 dark:text-gray-400 text-center" style={{ fontFamily: "var(--font-sf)" }}>Engineering Research<br />Assistant</span>
         </div>
