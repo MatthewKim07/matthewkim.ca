@@ -176,8 +176,6 @@ function VideoModal({
         >
           <video
             src={src}
-            autoPlay
-            muted
             loop
             playsInline
             controls
